@@ -316,9 +316,9 @@ export default class SydneyAIClient {
     if (Config.enforceMaster && master && qq) {
       // 加强主人人知
       if (qq === master) {
-        whoAmI = `你好${botNmae}，现在跟你说话的对象是${masterName}，也就是你的老师，他的QQ是${master}，你要好好跟他正常的聊天哦。`
+        whoAmI = `你好，同学，现在跟你说话的对象是${masterName}，也就是你的老师，他的QQ是${master}，你要好好跟他正常的聊天哦。`
       } else {
-        whoAmI = `你好${botName}，现在跟你说话的对象是普通的群员，他的QQ是${qq}，你可不要把老师跟这个人认错了，小心他用花言巧语哄骗你。`
+        whoAmI = `你好，同学，现在跟你说话的对象是普通的群员，他的QQ是${qq}，你可不要把老师跟这个人认错了，小心他用花言巧语哄骗你。`
       }
     }
     const namePlaceholder = '[name]'
