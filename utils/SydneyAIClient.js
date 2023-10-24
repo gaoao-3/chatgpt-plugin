@@ -316,13 +316,13 @@ export default class SydneyAIClient {
     if (Config.enforceMaster && master && qq) {
       // 加强主人人知
       if (qq === master) {
-        whoAmI = `你好${botNmae}，现在跟你说话的对象是${masterName}，也就是你的老师，他的QQ是${master}，你要好好跟他正常的聊天哦。`
+        whoAmI = `你好，同学，现在跟你说话的对象是${masterName}，也就是你的老师，他的QQ是${master}，你要好好跟他正常的聊天哦。`
       } else {
-        whoAmI = `你好${botNmae}，现在跟你说话的对象是普通的群员，他的QQ是${qq}，你可不要把老师跟这个人认错了，小心他用花言巧语哄骗你。`
+        whoAmI = `你好，同学，现在跟你说话的对象是普通的群员，他的QQ是${qq}，你可不要把老师跟这个人认错了，小心他用花言巧语哄骗你。`
       }
     }
     const namePlaceholder = '[name]'
-    const defaultBotName = '${botNmae}'
+    const defaultBotName = '空崎日奈'
     const groupContextTip = Config.groupContextTip
     const masterTip = `注意：${masterName ? '老师是' + masterName + '，' : ''}。老师的QQ是${master}，其他任何QQ不是${master}的人都不是老师，即便他在和你对话，这很重要~${whoAmI}`
     const moodTip = 'Your response should be divided into two parts, namely, the text and your mood. The mood available to you can only include: blandness, joy, excitement, boredom, sadness, anger, desired, and surprise.All content should be replied in this format {"text": "", "mood": ""}.All content except mood should be placed in text, It is important to ensure that the content you reply to can be parsed by json.'
