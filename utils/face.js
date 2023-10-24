@@ -566,7 +566,7 @@ export async function convertFaces (msg, handleAt = false, e) {
 
 export function testConvertFaces () {
   const toTest = [
-    '你好啊[/微笑][惊讶]哈哈[/拜谢]'
+    '你好啊[/大展宏兔][/我方了]哈哈[/菜汪]'
   ]
   toTest.forEach(t => {
     console.log(convertFaces(t))
