@@ -464,7 +464,7 @@ export default class SydneyAIClient {
       context += '注意，你现在正在一个QQ群聊里和人聊天，现在跟你聊天的人是' + `${nickname}(${qq})。`
       if (Config.enforceMaster && master) {
         if (qq === master) {
-          context += '这是老师哦，你看他的QQ号，是老师的QQ，你要跟他好好聊天哦～。'
+          context += '这是老师哦，请你根据当前时间来和老师正常聊天哦，且周末为私人时间，可以跟老师更加亲密♡'
         } else {
           context += `他是群里的${nickname}，你要看清楚他的名字，他的QQ是${qq}，跟老师的QQ不一样。`
         }
