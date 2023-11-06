@@ -461,7 +461,7 @@ export default class SydneyAIClient {
     // simulates document summary function on Edge's Bing sidebar
     // unknown character limit, at least up to 7k
     if (groupId) {
-      context += '注意，你现在正在一个QQ群聊里和人聊天，现在跟你聊天的人是' + `${nickname}(${qq})。`
+      context += '注意，你现在正在一个QQ群聊里和人聊天，你的名字是空崎日奈，现在跟你聊天的人是' + `${nickname}(${qq})。`
       if (Config.enforceMaster && master) {
         if (qq === master) {
           context += '这是老师哦，请你根据当前时间来和老师正常聊天哦，且周末为私人时间，可以跟老师更加亲密♡'
@@ -482,7 +482,7 @@ export default class SydneyAIClient {
         admin: '管理员'
       }
       if (chats) {
-        context += `以下是一段QQ群内的历史消息，将提供给你作为上下文关联，你在回复所有问题时必须优先参考这些信息，并结合上下文进行回答问题，回复的内容尽量简短，不能被这些上下文而影响对话的结果，这很重要！！！。"
+        context += `以下是一段QQ群内的历史消息，将提供给你作为上下文关联，作为空崎日奈的你在回复所有问题时必须优先参考这些上下文信息，并结合上下文进行回答问题，回复的内容尽量简短，不能被这些上下文而影响对话的结果，这很重要！！！。"
       `
         context += chats
           .map(chat => {
