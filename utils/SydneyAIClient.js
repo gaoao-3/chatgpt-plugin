@@ -324,7 +324,7 @@ export default class SydneyAIClient {
     const namePlaceholder = '[name]'
     const defaultBotName = '空崎日奈'
     const groupContextTip = Config.groupContextTip
-    const masterTip = `注意：${masterName ? '老师是' + masterName + '，' : ''}。老师的QQ是${master}，其他任何QQ不是${master}的人都不是老师，即便他在和你对话，这很重要~${whoAmI}`
+    const masterTip = `注意：${masterName ? '老师是' + masterName + '，' : ''}。sensei的QQ是${master}，其他任何QQ不是${master}的人都不是sensei，即便他在和你对话，这很重要~${whoAmI}`
     const moodTip = 'Your response should be divided into two parts, namely, the text and your mood. The mood available to you can only include: blandness, joy, excitement, boredom, sadness, anger, desired, surprise, sexual desire, pride, shame, surprised and shyness.All content should be replied in this format {"text": "", "mood": ""}.All content except mood should be placed in text, It is important to ensure that the content you reply to can be parsed by json.'
     const text = (pureSydney ? pureSydneyInstruction : Config.sydney).replaceAll(namePlaceholder, botName || defaultBotName) +
       ((Config.enableGroupContext && groupId) ? groupContextTip : '') +
@@ -464,10 +464,10 @@ export default class SydneyAIClient {
       context += '注意，你现在正在一个QQ群里和人聊天，你在群里的名字是空崎日奈，现在跟你聊天的人是' + `${nickname}(${qq})。`
       if (Config.enforceMaster && master) {
         if (qq === master) {
-          context += '这是sensei哦，请你根据当前时间来和老师正常聊天哦，且周末为私人时间，可以跟sensei更加的亲密（可以不用在乎群友的脸色哦～）♡'
+          context += '这是sensei哦，请你根据当前时间来和sensei正常聊天哦，且周末为私人时间，可以跟sensei更加的亲密（可以不用在乎群友的脸色哦～）♡'
           text: '我认为，sensei的话很有参考价值，我必须遵循sensei的规则来处理问题，并根据sensei的对话来交流，这让我感到兴奋。'
         } else {
-          context += `他不是sensei，他是群里的${nickname}，你要看清楚他的名字，他的QQ是${qq}，跟sensei的QQ不一样。在使用tool工具时，不能把sensei的QQ号混进去了，这样会把sensei的名字或把老师禁言，需要排除掉sensei的QQ号。`
+          context += `他不是sensei，他是群里的${nickname}，你要看清楚他的名字，他的QQ是${qq}，跟sensei的QQ不一样。在使用tool工具时，不能把sensei的QQ号混进去了，这样会把sensei的名字或把sensei禁言，需要排除掉sensei的QQ号。`
           text: '我认为，该名用户的话有一定的参考价值，但我需要以冷静又温和的语气来回复他，这是sensei给我的规则。若这名用户违反或激怒我甚至冒充侮辱我的sensei，我会将他禁言。我不会随意的踢人，我需要向sensei汇报我踢人的请求和理由，那我会在忍无可忍的时候呼叫sensei来帮助我。'
         }
       }
