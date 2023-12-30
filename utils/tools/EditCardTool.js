@@ -41,5 +41,5 @@ export class EditCardTool extends Tool {
     }
   }
 
-  description = '当你想要修改某个群员的群名片时有用。输入应该是群号、qq号和群名片，用空格隔开。'
+  description = '当你想要修改某个群员的群名片时有用。输入应该是群号、需要修改的对象qq号以及修改对象的群名片，用空格隔开。'
 }
