@@ -252,7 +252,7 @@ export const faceMapReverse = _.invert(faceMap);
 faceMapReverse['思考'] = '212';
 
 // 将消息中的表情占位符转换为 oicq 的表情代码
-export async function convertFaces(msg, handleAt = false, e = null) {
+export async function convertFaces(msg, handleAt = false, e) {
   // 如果 e?.isGroup 为 true 且 handleAt 为 true，则设置 handleAt 为 true
   handleAt = e?.isGroup && handleAt;
   // 群成员列表
@@ -324,8 +324,7 @@ export async function convertFaces(msg, handleAt = false, e = null) {
           // 设置 foundAt 为 false
           foundAt = false;
           // 将 @ 消息段添加到 msgs 数组中
-          //msgs.push(segment.at(groupCardQQMap.get(tmpAt))); // 更新：at 信息不再需要群名片参数
-          msgs.push(`[@${groupCardQQMap.get(tmpAt)}]`);
+          msgs.push(segment.at(groupCardQQMap.get(tmpAt))); // 更新：at 信息不再需要群名片参数
           // 清空 tmpAt
           tmpAt = '';
           continue;
@@ -352,8 +351,7 @@ export async function convertFaces(msg, handleAt = false, e = null) {
             tmpMsg = '';
           }
           // 添加表情消息段到 msgs 数组中
-          //msgs.push(segment.face(parseInt(faceId)));
-          msgs.push(`[face:${faceId}]`);
+          msgs.push(segment.face(parseInt(faceId)));
           // 清空 tmpMsg
           tmpMsg = '';
         } else {
@@ -380,29 +378,3 @@ export async function convertFaces(msg, handleAt = false, e = null) {
   // 返回转换后的消息段数组
   return msgs;
 }
-
-export function testConvertFaces() {
-  const toTest = [
-    '你好啊[/微笑][惊讶]哈哈[/拜谢]',
-    '这是[没有的表情]',
-    '@张三 你好啊[doge]',
-    '[/][/]'
-  ];
-  const mockE = {
-    isGroup: true,
-    group_id: 123456,
-    bot: {
-      gml: new Map([
-        [1, { user_id: 1, card: '张三', nickname: '张三' }],
-        [2, { user_id: 2, card: '李四', nickname: '李四' }]
-      ])
-    }
-  };
-  toTest.forEach(t => {
-    console.log('原始消息:', t);
-    console.log('转换后:', convertFaces(t, false, null));
-    console.log('转换后(带@):', convertFaces(t, true, mockE));
-  });
-}
-
-testConvertFaces();
