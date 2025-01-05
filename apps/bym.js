@@ -22,6 +22,12 @@ import { GoogleSearchTool } from '../utils/tools/GoogleSearchTool.js';
 import { UrlExtractionTool } from '../utils/tools/UrlExtractionTool.js';
 import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js';
 
+const roleMap = {
+  owner: '群主',
+  admin: '管理员',
+  member: '普通成员',
+};
+
 export class bym extends plugin {
   constructor() {
     super({
