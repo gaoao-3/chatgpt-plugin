@@ -1,5 +1,5 @@
 import _ from 'lodash';
-//import { segment } from 'oicq';
+import { segment } from 'oicq';
 
 /**
  * 更新说明：
