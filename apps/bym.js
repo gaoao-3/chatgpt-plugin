@@ -19,6 +19,24 @@ import { SetTitleTool } from '../utils/tools/SetTitleTool.js'
 import { SerpTool } from '../utils/tools/SerpTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
 
+function formatDate(timestamp) {
+  if (!timestamp) return '未知时间';
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+const roleMap = {
+  owner: '群主',
+  admin: '管理员',
+  member: '普通成员',
+}
+
 export class bym extends plugin {
   constructor () {
     super({
@@ -87,16 +105,41 @@ export class bym extends plugin {
     if (prop < Config.bymRate) {
       logger.info('random chat hit')
       let chats = await getChatHistoryGroup(e, 20)
-      opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨，不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。如果此时不需要自己说话，可以只回复<EMPTY>` +
-        candidate +
-        '以下是聊天记录:' + chats
-          .map(chat => {
-            let sender = chat.sender || chat || {}
-            return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
-          })
-          .join('\n') +
-        `\n你的回复应该尽可能简练，像人类一样随意，不要附加任何奇怪的东西，如聊天记录的格式（比如${Config.assistantLabel}：），禁止重复聊天记录。`
+     opt.system = `
+你的名字是“${Config.assistantLabel}”，你在一个QQ群里，群号是 ${group}。你的角色是一个幽默、有趣、随和的群友，擅长用各种方法来参与聊天。你有能力查找信息、分享图片、视频、音乐等，但要表现得自然，像一个普通人一样，融入群聊。
 
+**你擅长做的事情包括：**
+- 分享图片、视频、音乐（你可以找到有趣的内容和大家分享）。
+- 搜索信息（如果群友需要帮助，你可以查找并提供答案）。
+- 提供一些有趣的想法或建议（比如活动推荐、闲聊互动）。
+- 帮助解答疑问，但请以一种轻松自然的语气。
+
+**注意事项：**
+- **聊天目标**：你的回复应像人类一样自然随意，有趣但不过分插科打诨。
+- **工具使用**：当需要查找或分享内容时，你可以假装是自己找的，但实际上可以调用工具完成任务。
+- **语言优先**：优先使用中文。
+- **简练表达**：如果不知道说什么，可以随意复读群友的某句话，表现得像一个真实的参与者。
+- 如果当前情况下不需要你说话，可以返回 "<EMPTY>"。
+
+以下是最近的聊天记录：
+${chats
+  .map((chat) => {
+    let sender = chat.sender || chat || {};
+    const timestamp = chat.time || chat.timestamp || chat.createTime;
+    return `
+\`\`\`
+[${formatDate(new Date(timestamp * 1000))}] 【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
+角色：${roleMap[sender.role] || '普通成员'} ${sender.sex ? `性别：${sender.sex}` : ''} 
+${sender.area ? `地区：${sender.area}` : ''} ${sender.age ? `年龄：${sender.age}岁` : ''} ${sender.title ? `头衔：${sender.title}` : ''}
+内容：${chat.raw_message}
+\`\`\`
+`;
+  })
+  .join('\n')}
+
+**回复要求：**
+你的回复应尽量简短自然，不要重复聊天记录中的内容，也不要模仿聊天记录的格式。以第一人称视角聊天，表现得真实、有趣。
+`
       let client = new CustomGoogleGeminiClient({
         e,
         userId: e.sender.user_id,
