@@ -2,17 +2,9 @@ import _ from 'lodash';
 import { segment } from 'oicq';
 
 /**
- * 更新说明：
- * 1. 更新了 faceMap，添加了新的表情，并修正了部分表情的名称。
- * 2. 更新了 faceMapReverse，与 faceMap 保持一致。
- * 3. 优化了 convertFaces 函数：
- *    - 修复了获取群成员列表的逻辑错误。
- *    - 优化了 at 成员的逻辑，避免了重复的 at 信息。
- *    - 简化了表情查找的逻辑。
- * 4. 移除了不必要的注释和测试代码。
+ * 表情映射表，将表情 ID 映射到表情名称。
+ * @type {Object.<number, string>}
  */
-
-// 定义表情映射，将表情 ID 映射到表情名称
 export const faceMap = {
   0: '惊讶',
   1: '撇嘴',
@@ -59,14 +51,18 @@ export const faceMap = {
   46: '猪头',
   49: '拥抱',
   53: '蛋糕',
+  54: '闪电',
   55: '++',
   56: '刀',
+  57: '足球',
   59: '便便',
   60: '咖啡',
+  61: '饭',
   63: '玫瑰',
   64: '凋谢',
   66: '爱心',
   67: '心碎',
+  69: '礼物',
   74: '太阳',
   75: '月亮',
   76: '赞',
@@ -93,22 +89,40 @@ export const faceMap = {
   110: '吓',
   111: '可怜',
   112: '菜刀',
+  113: '啤酒',
   114: '篮球',
+  115: '乒乓',
   116: '示爱',
+  117: '瓢虫',
   118: '抱拳',
   119: '勾引',
   120: '拳头',
   121: '差劲',
   122: '爱你',
-  123: 'NO',
-  124: 'OK',
+  123: '不',
+  124: '好',
   125: '转圈',
+  126: '磕头',
+  127: '回头',
+  128: '跳绳',
   129: '挥手',
+  130: '激动',
+  131: '街舞',
+  132: '献吻',
+  133: '左太极',
+  134: '右太极',
+  136: '双喜',
   137: '鞭炮',
+  138: '灯笼',
+  140: 'K歌',
   144: '喝彩',
+  145: '祈祷',
   146: '爆筋',
   147: '棒棒糖',
   148: '喝奶',
+  151: '飞机',
+  158: '钞票',
+  168: '药',
   169: '手枪',
   171: '茶',
   172: '眨眼睛',
@@ -123,17 +137,26 @@ export const faceMap = {
   181: '戳一戳',
   182: '笑哭',
   183: '我最美',
+  184: '河蟹',
   185: '羊驼',
   187: '幽灵',
+  188: '蛋',
+  190: '菊花',
+  192: '红包',
   193: '大笑',
   194: '不开心',
+  197: '冷漠',
   198: '呃',
-  200: '求求',
+  199: '好棒',
+  200: '拜托',
   201: '点赞',
   202: '无聊',
   203: '托脸',
   204: '吃',
+  205: '送花',
   206: '害怕',
+  207: '花痴',
+  208: '小样儿',
   210: '飙泪',
   211: '我不看',
   212: '托腮',
@@ -143,6 +166,7 @@ export const faceMap = {
   217: '扯一扯',
   218: '舔一舔',
   219: '蹭一蹭',
+  220: '拽炸天',
   221: '顶呱呱',
   222: '抱抱',
   223: '暴击',
@@ -163,6 +187,11 @@ export const faceMap = {
   241: '生日快乐',
   243: '甩头',
   244: '扔狗',
+  245: '加油必胜',
+  246: '加油抱抱',
+  247: '口罩护体',
+  260: '搬砖中',
+  261: '忙到飞起',
   262: '脑阔疼',
   263: '沧桑',
   264: '捂脸',
@@ -175,8 +204,12 @@ export const faceMap = {
   271: '吃瓜',
   272: '呵呵哒',
   273: '我酸了',
+  274: '太南了',
+  276: '辣椒酱',
   277: '汪汪',
   278: '汗',
+  279: '打脸',
+  280: '击掌',
   281: '无眼笑',
   282: '敬礼',
   283: '狂笑',
@@ -187,10 +220,12 @@ export const faceMap = {
   288: '请',
   289: '睁眼',
   290: '敲开心',
+  291: '震惊',
   292: '让我康康',
   293: '摸锦鲤',
   294: '期待',
   295: '拿到红包',
+  296: '真好',
   297: '拜谢',
   298: '元宝',
   299: '牛啊',
@@ -198,16 +233,24 @@ export const faceMap = {
   301: '好闪',
   302: '左拜年',
   303: '右拜年',
+  304: '红包包',
   305: '右亲亲',
   306: '牛气冲天',
   307: '喵喵',
+  308: '求红包',
+  309: '谢红包',
+  310: '新年烟花',
   311: '打call',
   312: '变形',
+  313: '嗑到了',
   314: '仔细分析',
-  317: '菜汪',
+  315: '加油',
+  316: '我没事',
+  317: '菜狗',
   318: '崇拜',
   319: '比心',
   320: '庆祝',
+  321: '老色痞',
   322: '拒绝',
   323: '嫌弃',
   324: '吃糖',
@@ -245,136 +288,121 @@ export const faceMap = {
   395: '略略略'
 };
 
-// 反向映射，将表情名称映射到表情 ID
+/**
+ * 反向表情映射表，将表情名称映射到表情 ID。
+ * 此处进行了优化，键值互换，方便通过表情名称查找 ID。
+ * @type {Object.<string, number>}
+ */
 export const faceMapReverse = _.invert(faceMap);
 
-// 将“思考”重定向到 212（托腮）
-faceMapReverse['思考'] = '212';
-
-// 将消息中的表情占位符转换为 oicq 的表情代码
+/**
+ * 将消息字符串中的表情名称转换为表情符号。
+ *
+ * @param {string} msg - 要转换的消息字符串。
+ * @param {boolean} [handleAt=false] - 是否处理 @ 符号。
+ * @param {import("oicq").GroupMessageEvent | import("oicq").PrivateMessageEvent} [e] - 消息事件对象。
+ * @returns {Promise<Array<import("oicq").MessageElem>>} 包含转换后消息段的数组。
+ */
 export async function convertFaces(msg, handleAt = false, e) {
-  // 如果 e?.isGroup 为 true 且 handleAt 为 true，则设置 handleAt 为 true
   handleAt = e?.isGroup && handleAt;
-  // 群成员列表
   let groupMembers;
-  // 群名片到 QQ 号的映射
-  const groupCardQQMap = new Map(); // 更新：使用 Map 优化查找效率
-  // 如果需要处理 @ 消息
+  /**
+   * 缓存的群成员信息，键为群名片或昵称，值为 QQ 号码。
+   * @type {Object.<string, number>}
+   */
+  let groupCardQQMap = {};
+
+  // 获取并缓存群成员信息
   if (handleAt) {
     try {
-      // 获取群成员列表
-      groupMembers = e.bot.gml.get(e.group_id); // 更新：修复获取群成员列表的逻辑错误
+      groupMembers = e.bot.gml.get(e.group_id);
     } catch (err) {
-      // 如果获取失败，打印错误信息
       console.error(`Failed to get group members: ${err}`);
     }
-    // 如果成功获取群成员列表
     if (groupMembers) {
-      // 遍历群成员列表
-      for (const [key, userInfo] of groupMembers) { // 更新：使用 for...of 遍历 Map
-        // 将群名片或昵称映射到 QQ 号
+      for (let [key, userInfo] of groupMembers) {
         if (userInfo.card) {
-          groupCardQQMap.set(userInfo.card, userInfo.user_id); // 更新：使用 Map.set() 方法
+          groupCardQQMap[userInfo.card] = userInfo.user_id;
         }
         if (userInfo.nickname) {
-          groupCardQQMap.set(userInfo.nickname, userInfo.user_id); // 更新：使用 Map.set() 方法
+          groupCardQQMap[userInfo.nickname] = userInfo.user_id;
         }
       }
     }
   }
-  // 临时消息字符串
-  let tmpMsg = '';
-  // 临时表情字符串
-  let tmpFace = '';
-  // 临时 @ 字符串
-  let tmpAt = '';
-  // 是否找到表情
-  let foundFace = false;
-  // 是否找到 @
-  let foundAt = false;
-  // 转换后的消息段数组
+
+  /**
+   * 存储转换后的消息段。
+   * @type {Array<import("oicq").MessageElem>}
+   */
   const msgs = [];
-  // 遍历消息字符串
-  for (let i = 0; i < msg.length; i++) {
-    // 如果找到 '['
-    if (msg[i] === '[') {
-      // 设置 foundFace 为 true
-      foundFace = true;
-      continue;
+  const regex = /\[\/?(.+?)\]/g; // 匹配表情名称的正则表达式，兼容 /
+  let lastIndex = 0; // 上次匹配结束的位置
+
+  // 使用正则表达式进行表情匹配和替换
+  let match;
+  while ((match = regex.exec(msg)) !== null) {
+    const rawFaceName = match[1]; // 匹配到的原始表情名称，可能包含 /
+    const faceName = _.trimStart(rawFaceName, '/'); // 去除开头的 /
+    const faceId = faceMapReverse[faceName]; // 表情 ID
+
+    // 将匹配到的表情之前的文本添加到 msgs 数组中
+    if (match.index > lastIndex) {
+      msgs.push(segment.text(msg.substring(lastIndex, match.index)));
     }
-    // 如果没有找到表情
-    if (!foundFace) {
-      // 如果需要处理 @ 消息且找到 '@'
-      if (handleAt && msg[i] === '@') {
-        // 设置 foundAt 为 true
-        foundAt = true;
-        // 如果 tmpMsg 不为空，将其添加到 msgs 数组中
-        if (tmpMsg) {
-          msgs.push(tmpMsg);
-          tmpMsg = '';
-        }
-        continue;
-      }
-      // 如果需要处理 @ 消息且 foundAt 为 true
-      if (handleAt && foundAt) {
-        // 将当前字符添加到 tmpAt 中
-        tmpAt += msg[i];
-        // 如果在 groupCardQQMap 中找到 tmpAt
-        if (groupCardQQMap.has(tmpAt)) { // 更新：使用 Map.has() 方法
-          // 设置 foundAt 为 false
-          foundAt = false;
-          // 将 @ 消息段添加到 msgs 数组中
-          msgs.push(segment.at(groupCardQQMap.get(tmpAt))); // 更新：at 信息不再需要群名片参数
-          // 清空 tmpAt
-          tmpAt = '';
-          continue;
-        }
-      } else {
-        // 将当前字符添加到 tmpMsg 中
-        tmpMsg += msg[i];
-      }
+
+    // 如果表情存在，则添加表情段，否则添加原始文本
+    if (faceId !== undefined) {
+      msgs.push(segment.face(parseInt(faceId)));
     } else {
-      // 如果当前字符不是 ']'
-      if (msg[i] !== ']') {
-        // 将当前字符添加到 tmpFace 中
-        tmpFace += msg[i];
-      } else {
-        // 设置 foundFace 为 false
-        foundFace = false;
-        // 从 faceMapReverse 中查找表情 ID
-        const faceId = faceMapReverse[tmpFace] || faceMapReverse['/' + tmpFace] || faceMapReverse[_.trimStart(tmpFace, '/')]; // 更新：简化表情查找逻辑
-        // 如果找到表情 ID
-        if (faceId) {
-          // 如果 tmpMsg 不为空，将其添加到 msgs 数组中
-          if (tmpMsg) {
-            msgs.push(tmpMsg);
-            tmpMsg = '';
+      msgs.push(segment.text(match[0]));
+    }
+
+    lastIndex = regex.lastIndex; // 更新上次匹配结束的位置
+  }
+
+  // 将剩余的文本添加到 msgs 数组中
+  if (lastIndex < msg.length) {
+    msgs.push(segment.text(msg.substring(lastIndex)));
+  }
+
+  // 处理 @ 符号
+  if (handleAt) {
+    const atRegex = /@(.+?)(?=\s|$)/g; // 匹配 @ 符号的正则表达式
+    for (let i = 0; i < msgs.length; i++) {
+      const msgSegment = msgs[i];
+      if (msgSegment.type === 'text') {
+        let lastIndex = 0;
+        let atMatch;
+        while ((atMatch = atRegex.exec(msgSegment.text)) !== null) {
+          const atName = atMatch[1];
+          const atId = groupCardQQMap[atName];
+
+          // 将匹配到的 @ 之前的文本添加到 msgs 数组中
+          if (atMatch.index > lastIndex) {
+            msgs.splice(i, 1, segment.text(msgSegment.text.substring(lastIndex, atMatch.index)));
+            i++;
           }
-          // 添加表情消息段到 msgs 数组中
-          msgs.push(segment.face(parseInt(faceId)));
-          // 清空 tmpMsg
-          tmpMsg = '';
-        } else {
-          // 将 '[' 和 tmpFace 拼接到 tmpMsg 中
-          tmpMsg += `[${tmpFace}]`;
+
+          // 如果 @ 的用户存在，则添加 @ 段，否则添加原始文本
+          if (atId !== undefined) {
+            msgs.splice(i, 1, segment.at(atId));
+            i++;
+          } else {
+            msgs.splice(i, 1, segment.text(atMatch[0]));
+            i++;
+          }
+
+          lastIndex = atRegex.lastIndex;
         }
-        // 清空 tmpFace
-        tmpFace = '';
+
+        // 将剩余的文本添加到 msgs 数组中
+        if (lastIndex < msgSegment.text.length) {
+          msgs.splice(i, 1, segment.text(msgSegment.text.substring(lastIndex)));
+        }
       }
     }
   }
-  // 如果 tmpMsg 不为空，将其添加到 msgs 数组中
-  if (tmpMsg) {
-    msgs.push(tmpMsg);
-  }
-  // 如果 tmpFace 不为空，将其添加到 msgs 数组中
-  if (tmpFace) {
-    msgs.push(`[${tmpFace}`);
-  }
-  // 如果需要处理 @ 消息且 tmpAt 不为空，将其添加到 msgs 数组中
-  if (handleAt && tmpAt) {
-    msgs.push(`@${tmpAt}`);
-  }
-  // 返回转换后的消息段数组
+
   return msgs;
 }
