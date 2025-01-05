@@ -97,6 +97,10 @@ export class bym extends plugin {
         chats
           .map((chat) => {
             let sender = chat.sender || chat || {};
+            const timestamp = chat.time || chat.timestamp || chat.createTime; // 尝试多种时间字段
+            if (!timestamp) {
+              logger.warn(`聊天记录缺少时间戳: ${JSON.stringify(chat)}`);
+            }
             return `【${sender.card || sender.nickname}】（QQ: ${sender.user_id}，角色: ${
               roleMap[sender.role] || '普通成员'
             }${sender.area ? `，地区: ${sender.area}` : ''}${
@@ -104,7 +108,7 @@ export class bym extends plugin {
             }${sender.title ? `，头衔: ${sender.title}` : ''}${
               sender.sex ? `，性别: ${sender.sex}` : ''
             }）  
-时间: ${formatDate(new Date(chat.time * 1000))}  
+时间: ${timestamp ? formatDate(new Date(timestamp * 1000)) : '未知'}  
 内容: ${chat.raw_message}`;
           })
           .join('\n') +
