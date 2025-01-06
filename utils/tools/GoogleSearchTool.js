@@ -72,7 +72,7 @@ export class GoogleSearchTool extends AbstractTool {
    * @private
    */
   async searchWithGemini(query, length) {
-    const apiKey = Config.geminiKey;
+    const apiKey = Config.getGeminiKey();
     const apiBaseUrl = Config.geminiBaseUrl;
     const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 

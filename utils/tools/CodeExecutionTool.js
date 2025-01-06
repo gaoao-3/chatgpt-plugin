@@ -101,7 +101,7 @@ export class CodeExecutionTool extends AbstractTool {
    */
   async executeCode(code, language, description) {
     // 获取API配置信息
-    const apiKey = Config.geminiKey;
+    const apiKey = Config.getGeminiKey();
     const apiBaseUrl = Config.geminiBaseUrl;
     const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
 
