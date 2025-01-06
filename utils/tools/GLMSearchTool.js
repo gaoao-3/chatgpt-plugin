@@ -88,15 +88,32 @@ export class GLMSearchTool extends AbstractTool {
    * @private
    */
   processGLMResponse(data) {
-    if (!data?.choices?.[0]?.search_results?.search_results) {
-      throw new Error('无效的 API 响应');
+    // 检查是否存在 choices 数组，且数组中至少有一个元素
+    if (!data?.choices?.[0]?.tool_calls) {
+      throw new Error('无效的 API 响应：缺少 choices 或 tool_calls');
+    }
+    
+    // 找到 type 为 "search_result" 的 tool_call
+    const searchResultToolCall = data.choices[0].tool_calls.find(
+      (toolCall) => toolCall.type === 'search_result'
+    );
+
+    // 检查是否找到 search_result 类型的 tool_call
+    if (!searchResultToolCall) {
+      throw new Error('无效的 API 响应：未找到 search_result');
     }
 
-    const results = data.choices[0].search_results.search_results.map(result => ({
-      content: result.content, // 现在 content 是字符串
-      link: result.link, // 现在 link 是字符串
-      title: result.title, // 现在 title 是字符串
-      refer: result.refer, // 现在 refer 是字符串
+    // 检查 search_result 是否存在且是一个数组
+    if (!Array.isArray(searchResultToolCall.search_result)) {
+      throw new Error('无效的 API 响应：search_result 不是数组');
+    }
+
+    // 提取 search_result 数组中的数据
+    const results = searchResultToolCall.search_result.map((result) => ({
+      content: result.content,
+      link: result.link,
+      title: result.title,
+      refer: result.refer,
     }));
 
     return results;
