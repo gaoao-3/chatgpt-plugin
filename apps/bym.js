@@ -21,6 +21,7 @@ import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessage
 import { GoogleSearchTool } from '../utils/tools/GoogleSearchTool.js'
 import { UrlExtractionTool } from '../utils/tools/UrlExtractionTool.js'
 import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
+import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
 
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
@@ -160,6 +161,7 @@ export class bym extends plugin {
         new SendMusicTool(),
         new SendPictureTool(),
         new GoogleSearchTool(),
+        new GLMSearchTool(),
         new UrlExtractionTool(),
         new CodeExecutionTool(),
         new WebsiteTool(),
