@@ -24,6 +24,7 @@ import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
 import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
 import { APTool } from '../utils/tools/APTool.js'
 import { HinaVoiceTool } from '../utils/tools/HinaVoiceTool.js'
+import { customSplitRegeximport { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
@@ -46,9 +47,9 @@ wner: '群主',
   admin: '管理员',
   member: '普通成员',
 }
-import { customSplitRegeximport { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
-plugin {
+
+export class bym extends plugin {
   constructor () {
     super({
       name: 'ChatGPT-Plugin 伪人bym',
@@ -66,7 +67,7 @@ plugin {
       ]
     })
   }
-
+  
   /** 复读 */
   async bym (e) {
     if (!Config.enableBYM) {
