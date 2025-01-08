@@ -42,8 +42,13 @@ const roleMap = {
   admin: '管理员',
   member: '普通成员',
 }
+wner: '群主',
+  admin: '管理员',
+  member: '普通成员',
+}
+import { customSplitRegeximport { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
-export class bym extends plugin {
+plugin {
   constructor () {
     super({
       name: 'ChatGPT-Plugin 伪人bym',
@@ -219,44 +224,4 @@ export class bym extends plugin {
     }
     return false
   }
-}
-
-/**
- * 过滤
- * @param msg
- */
-function filterResponseChunk (msg) {
-  if (!msg || typeof msg !== 'string') {
-    return false
-  }
-  if (!msg.trim()) {
-    return false
-  }
-  if (msg.trim() === '```') {
-    return false
-  }
-  if (msg.trim() === '<EMPTY>') {
-    return false
-  }
-  return msg
-}
-
-function customSplitRegex (text, regex, limit) {
-  const result = []
-  let match
-  let lastIndex = 0
-  const globalRegex = new RegExp(regex, 'g')
-
-  while ((match = globalRegex.exec(text)) !== null) {
-    if (result.length < limit - 1) {
-      result.push(text.slice(lastIndex, match.index))
-      lastIndex = match.index + match[0].length
-    } else {
-      break
-    }
-  }
-
-  // 添加剩余部分
-  result.push(text.slice(lastIndex))
-  return result
 }
