@@ -194,5 +194,5 @@ export class HinaVoiceTool extends AbstractTool {
   };
 
   // 工具描述
-  description = 'Generates speech from text using AI TTS technology. **Please provide text in Japanese.** Certain nouns, **especially names, should be provided in their corresponding kana**. For example, "老师" should be converted to "せんせい", and names should also be provided in kana.';
+  description = 'Generates speech from text using AI TTS technology. **Please provide text in Japanese.** Certain nouns, **especially names, should be provided in their corresponding kana**. For example, "先生" should be converted to "せんせい", and names should also be provided in kana.';
 }
