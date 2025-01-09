@@ -62,7 +62,7 @@ export class bym extends plugin {
       ]
     })
   }
-  
+
   /** 复读 */
   async bym (e) {
     if (!Config.enableBYM) {
@@ -172,7 +172,7 @@ export class bym extends plugin {
         new WeatherTool(),
         new SendMessageToSpecificGroupOrUserTool()
       ]
-      if (Config.azSerpKey) {
+        if (Config.azSerpKey) {
         tools.push(new SerpTool())
       }
       if (e.group.is_admin || e.group.is_owner) {
