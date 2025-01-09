@@ -43,11 +43,6 @@ const roleMap = {
   admin: '管理员',
   member: '普通成员',
 }
-wner: '群主',
-  admin: '管理员',
-  member: '普通成员',
-}
-
 
 export class bym extends plugin {
   constructor () {
