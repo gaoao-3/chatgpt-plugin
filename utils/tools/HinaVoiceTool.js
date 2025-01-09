@@ -10,7 +10,7 @@ import { fileURLToPath } from 'url';
 const streamPipeline = promisify(pipeline);
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
-// 直接在代码中定义配置信息
+// 优化后的配置信息，直接在代码中定义，避免使用配置文件
 const TTS_SERVICE_URL = 'http://127.0.0.1:23456/voice/gpt-sovits'; // TTS 服务地址
 const PRESETS = [ // 预设配置，每个预设对应一个提示文本
   { id: 'hina1', prompt_text: 'どこかに座って...練習したいところだけど...' },
@@ -64,7 +64,7 @@ const downloadFile = async (url, filepath, headers = {}, retries = 3) => {
 const getRandomPreset = () => {
   const randomIndex = Math.floor(Math.random() * PRESETS.length);
   const randomEntry = PRESETS[randomIndex];
-  console.log(`随机选择的预设参数：id=${randomEntry.id}, prompt_text=${randomEntry.prompt_text}`);
+  console.log(`随机选择的预设：id=${randomEntry.id}, prompt_text=${randomEntry.prompt_text}`);
   return randomEntry;
 };
 
@@ -92,10 +92,6 @@ export class HinaVoiceTool extends AbstractTool {
         type: 'string',
         description: '要转换为语音的文本。**请使用日语。**某些名词将被替换为其对应的假名。',
       },
-      preset: {
-        type: 'string',
-        description: '用于 TTS 的预设。如果未提供，将随机选择一个预设。',
-      },
     },
     required: ['text'], // 必填参数
   };
@@ -112,24 +108,15 @@ export class HinaVoiceTool extends AbstractTool {
    * @returns {Promise<string>} - 返回处理结果或错误信息
    */
   func = async function (opt, e) {
-    let { text, preset } = opt;
+    let { text } = opt;
     if (!text) {
       return 'Text parameter is required.'; // 如果没有提供 text 参数，返回错误信息
     }
 
-    // 优化 preset 选择逻辑
-    if (!preset) {
-      const randomPreset = getRandomPreset();
-      preset = randomPreset.id;
-      console.log(`未指定 preset，已随机选择：${preset}`);
-    } else if (!PRESETS.find((p) => p.id === preset)) {
-      console.warn(`指定的 preset "${preset}" 不存在，将随机选择一个预设`);
-      const randomPreset = getRandomPreset();
-      preset = randomPreset.id;
-      console.log(`已随机选择 preset：${preset}`);
-    } else {
-      console.log(`已使用指定的 preset：${preset}`);
-    }
+    // 始终随机选择预设
+    const randomPreset = getRandomPreset();
+    const preset = randomPreset.id;
+    console.log(`使用随机预设：${preset}`);
 
     // 查找预设对应的 prompt_text
     const presetObj = PRESETS.find((p) => p.id === preset);
@@ -194,5 +181,5 @@ export class HinaVoiceTool extends AbstractTool {
   };
 
   // 工具描述
-  description = 'Generates speech from text using AI TTS technology. **Please provide text in Japanese.** Certain nouns, **especially names, should be provided in their corresponding kana**. For example, "先生" should be converted to "せんせい", and names should also be provided in kana.';
+  description = '语音发送工具，输入想说的日语内容，进行语音发送，名词需要翻译成假名。';
 }
