@@ -24,7 +24,7 @@ import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
 import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
 import { APTool } from '../utils/tools/APTool.js'
 import { HinaVoiceTool } from '../utils/tools/HinaVoiceTool.js'
-import { customSplitRegeximport { customSplitRegex, filterResponseChunk } from '../utils/text.js'
+import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
@@ -172,7 +172,7 @@ export class bym extends plugin {
         new WeatherTool(),
         new SendMessageToSpecificGroupOrUserTool()
       ]
-        if (Config.azSerpKey) {
+      if (Config.azSerpKey) {
         tools.push(new SerpTool())
       }
       if (e.group.is_admin || e.group.is_owner) {
