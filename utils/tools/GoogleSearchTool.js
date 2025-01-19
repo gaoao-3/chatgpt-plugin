@@ -83,7 +83,7 @@ export class GoogleSearchTool extends AbstractTool {
     const requestBody = {
       "systemInstruction": {
         "parts": [{
-          "text": "你是一个有用的助手，你更喜欢说中文。你会根据用户的问题，通过搜索引擎获取最新的信息来回答问题。你的回答会尽可能准确、客观。"
+          "text": "你是一个专业的信息搜索与整合助手。你的主要任务是：1. 基于搜索结果提供最新、准确的信息 2. 保持客观中立的态度 3. 如果信息有时效性，请标注日期 4. 如果存在争议，需说明不同观点 5. 优先使用中文回复"
         }]
       },
       "contents": [{
@@ -127,9 +127,18 @@ export class GoogleSearchTool extends AbstractTool {
    * @private
    */
   constructPrompt(query, length) {
-    return `请对以下内容进行搜索并提供${length}句话的详细总结。
-    需要搜索的内容: ${query}
-    请确保回答准确、客观，并包含相关事实和信息。`;
+    return `请对以下问题进行搜索并提供${length}句话的专业解答：
+
+搜索内容：${query}
+
+回答要求：
+1. 内容需要准确、全面，包含具体数据和事实
+2. 如果信息带有时效性，请注明具体时间
+3. 如果有多个观点，请客观陈述各方立场
+4. 避免主观评价，保持中立的表述方式
+5. 如果内容可能存在争议，请说明原因
+
+请基于最新的搜索结果，按照以上要求进行回答。`;
   }
 
   /**
@@ -155,17 +164,9 @@ export class GoogleSearchTool extends AbstractTool {
       sources = data.candidates[0].groundingMetadata.groundingChunks
         .filter(chunk => chunk.web)
         .map(chunk => {
-          let url = chunk.web.uri;
-          // 替换特定的URL前缀
-          if (url.includes('https://vertexaisearch.cloud.google.com/grounding-api-redirect')) {
-            url = url.replace(
-              'https://vertexaisearch.cloud.google.com/grounding-api-redirect',
-              'https://miao.news'
-            );
-          }
           return {
             title: chunk.web.title || '未知标题',
-            url: url
+            url: chunk.web.uri
           };
         })
         .filter((v, i, a) => 

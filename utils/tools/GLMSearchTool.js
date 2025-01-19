@@ -2,14 +2,9 @@ import { AbstractTool } from './AbstractTool.js';
 import fetch from 'node-fetch';
 import common from '../../../../lib/common/common.js';
 
-/**
- * 自定义搜索工具类 - 使用 GLM Search API
- * @class GLMSearchTool
- * @extends {AbstractTool}
- */
 export class GLMSearchTool extends AbstractTool {
   name = 'GLMSearchTool';
-
+  
   parameters = {
     properties: {
       query: {
@@ -20,15 +15,8 @@ export class GLMSearchTool extends AbstractTool {
     required: ['query'],
   };
 
-  description = '使用 GLM Search API 进行搜索，根据输入的内容或关键词提供搜索结果和链接。';
+  description = '使用 GLM Search API 进行搜索，根据输入的内容或关键词提供搜索结果。';
 
-  /**
-   * 工具执行函数
-   * @param {Object} opt - 工具参数
-   * @param {string} opt.query - 搜索内容或关键词
-   * @param {Object} e - 事件对象 (在此工具中未使用，但为了保持接口一致性而保留)
-   * @returns {Promise<Array>} - 包含搜索结果的数组
-   */
   func = async function (opt, e) {
     const { query } = opt;
 
@@ -40,29 +28,33 @@ export class GLMSearchTool extends AbstractTool {
       const searchResults = await this.searchWithGLM(query);
       console.debug(`[GLMSearchTool] 搜索结果:`, searchResults);
 
+      if (!searchResults || searchResults.length === 0) {
+        await e.reply('未找到相关搜索结果');
+        return [];
+      }
+
       // 构建转发消息
       const forwardMsg = [`${e.sender.card || e.sender.nickname || e.user_id}的搜索结果：`];
+      
+      // 遍历并格式化搜索结果
       searchResults.forEach((result, index) => {
-        forwardMsg.push(`${index + 1}. 标题：${result.title}`);
-        forwardMsg.push(`   内容摘要：${result.content}`);
-        forwardMsg.push(`   链接：${result.link}`);
-        forwardMsg.push(`   来源：${result.refer}`);
+        const msg = [];
+        msg.push(`${index + 1}. ${result.title || '无标题'}`);
+        if (result.content) msg.push(`   ${result.content}`);
+        if (result.link) msg.push(`   链接：${result.link}`);
+        if (result.media) msg.push(`   来源：${result.media}`);
+        forwardMsg.push(msg.join('\n'));
       });
-      e.reply(await common.makeForwardMsg(e, forwardMsg, `${e.sender.card || e.sender.nickname || e.user_id}的搜索结果`));
 
+      await e.reply(await common.makeForwardMsg(e, forwardMsg, `搜索结果`));
       return searchResults;
     } catch (error) {
       console.error('[GLMSearchTool] 搜索失败:', error);
-      throw new Error(`搜索失败: ${error.message}`);
+      await e.reply(`搜索失败: ${error.message}`);
+      throw error;
     }
   };
 
-  /**
-   * 使用 GLM Search API 进行搜索
-   * @param {string} query - 搜索内容或关键词
-   * @returns {Promise<Array>} - 包含搜索结果的数组
-   * @private
-   */
   async searchWithGLM(query) {
     const apiUrl = `https://glm-search.deno.dev/search?q=${encodeURIComponent(query)}`;
 
@@ -71,7 +63,7 @@ export class GLMSearchTool extends AbstractTool {
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(`API 请求失败: ${data.error?.message || '未知错误'}`);
+        throw new Error(`API请求失败: ${data.error?.message || '未知错误'}`);
       }
 
       return this.processGLMResponse(data);
@@ -81,41 +73,29 @@ export class GLMSearchTool extends AbstractTool {
     }
   }
 
-  /**
-   * 处理 GLM Search API 响应
-   * @param {Object} data - API 响应数据
-   * @returns {Array} - 处理后的搜索结果数组
-   * @private
-   */
   processGLMResponse(data) {
-    // 检查是否存在 choices 数组，且数组中至少有一个元素
-    if (!data?.choices?.[0]?.tool_calls) {
-      throw new Error('无效的 API 响应：缺少 choices 或 tool_calls');
+    // 验证基本响应结构
+    if (!data?.choices?.[0]?.message?.tool_calls) {
+      return [];
     }
+
+    const toolCalls = data.choices[0].message.tool_calls;
     
-    // 找到 type 为 "search_result" 的 tool_call
-    const searchResultToolCall = data.choices[0].tool_calls.find(
-      (toolCall) => toolCall.type === 'search_result'
-    );
-
-    // 检查是否找到 search_result 类型的 tool_call
-    if (!searchResultToolCall) {
-      throw new Error('无效的 API 响应：未找到 search_result');
+    // 查找search_result类型的工具调用
+    const searchResultCall = toolCalls.find(call => call.type === 'search_result');
+    
+    if (!searchResultCall?.search_result) {
+      return [];
     }
 
-    // 检查 search_result 是否存在且是一个数组
-    if (!Array.isArray(searchResultToolCall.search_result)) {
-      throw new Error('无效的 API 响应：search_result 不是数组');
-    }
-
-    // 提取 search_result 数组中的数据
-    const results = searchResultToolCall.search_result.map((result) => ({
-      content: result.content,
-      link: result.link,
-      title: result.title,
-      refer: result.refer,
+    // 返回搜索结果数组
+    return searchResultCall.search_result.map(result => ({
+      content: result.content || '',
+      link: result.link || '',
+      title: result.title || '',
+      media: result.media || '',
+      icon: result.icon || '',
+      refer: result.refer || ''
     }));
-
-    return results;
   }
 }
