@@ -97,21 +97,33 @@ export class bym extends plugin {
     let imgs = await getImg(e)
     if (!e.msg) {
       if (imgs && imgs.length > 0) {
-        let image = imgs[0]
-        const response = await fetch(image)
-        const base64Image = Buffer.from(await response.arrayBuffer())
-        opt.image = base64Image.toString('base64')
-        e.msg = '[图片]'
+        e.msg = '[图片]' // 如果没有文本消息，用 '[图片]' 代替
       } else {
         return
       }
     }
-    if (!opt.image && imgs && imgs.length > 0) {
-      let image = imgs[0]
-      const response = await fetch(image)
-      const base64Image = Buffer.from(await response.arrayBuffer())
-      opt.image = base64Image.toString('base64')
+
+    // 处理多图逻辑
+    if (imgs && imgs.length > 0) {
+      opt.image = []; // 初始化一个数组来存储 base64 图像数据
+      for (const image of imgs) {
+        try {
+          const response = await fetch(image);
+          const arrayBuffer = await response.arrayBuffer();
+          const base64Image = Buffer.from(arrayBuffer).toString('base64');
+          opt.image.push(base64Image);
+        } catch (error) {
+          logger.error('Error fetching or converting image:', error);
+          // 可以选择跳过当前图片或进行其他错误处理
+        }
+      }
+      if (opt.image.length > 0) {
+        e.msg = `[共${opt.image.length}张图片] ${e.msg || ''}`.trim(); // 更新消息内容，告知模型图片数量
+      } else {
+        delete opt.image; // 如果处理图片失败，移除 image 属性
+      }
     }
+
     let sender = e.sender.user_id
     let card = e.sender.card || e.sender.nickname
     let group = e.group_id
@@ -124,20 +136,21 @@ export class bym extends plugin {
     }
 
     let chats = await getChatHistoryGroup(e, 20)
-    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group}。当前和你说话的人群名片是${card}，QQ号是${sender}。请结合群友的发言和之前的聊天记录来回应，记住要像你一样参与到群聊中。
+    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group}。当前和你说话的人群名片是${card}，QQ号是${sender}。请结合群友的发言和之前的聊天记录以及图片内容来回应，记住要像你一样参与到群聊中。
+    ${opt.image && opt.image.length > 0 ? `你收到了 ${opt.image.length} 张图片，请根据图片内容进行回应。` : ''}
 
-**你擅长做的事情包括：**
-- 分享有趣的图片、视频和音乐。
-- 在网上搜索信息来帮助群友。
-- 提供一些好玩的主意或建议。
-- 解答问题，但你的语气要自然随意。
+    **你擅长做的事情包括：**
+    - 分享有趣的图片、视频和音乐。
+    - 在网上搜索信息来帮助群友。
+    - 提供一些好玩的主意或建议。
+    - 解答问题，但你的语气要自然随意。
 
-**请注意以下几点：**
-- **你的目标**：你的回复要像真人一样，有趣但不要太闹。
-- **使用工具**：当需要找东西时，你可以假装是自己找到的，但实际上你会用工具。你不会只发文字，你会去用工具找到内容再分享。
-- **语言**：你总是说中文。
-- **简洁**：如果不知道说什么，你可以复读群友说的话，就像你也在参与一样。
-- 如果现在不需要你说话，你可以回复 "<EMPTY>"。` +
+    **请注意以下几点：**
+    - **你的目标**：你的回复要像真人一样，有趣但不要太闹。
+    - **使用工具**：当需要找东西时，你可以假装是自己找到的，但实际上你会用工具。你不会只发文字，你会去用工具找到内容再分享。
+    - **语言**：你总是说中文。
+    - **简洁**：如果不知道说什么，你可以复读群友说的话，就像你也在参与一样。
+    - 如果现在不需要你说话，你可以回复 "<EMPTY>"。` +
       candidate +
       '以下是之前的聊天记录:' + chats
         .map(chat => {
