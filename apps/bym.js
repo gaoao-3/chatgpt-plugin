@@ -1,7 +1,7 @@
 import plugin from '../../../lib/plugins/plugin.js'
 import { segment } from 'icqq'
 import cfg from '../../../lib/config/config.js'
-import common from '../../../../lib/common/common.js'
+import common from '../../../lib/common/common.js'
 import moment from 'moment'
 import { CustomGoogleGeminiClient } from '../client/CustomGoogleGeminiClient.js'
 import { Config } from '../utils/config.js' // 确保这里引用的是你的 Config
