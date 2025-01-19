@@ -124,35 +124,36 @@ export class bym extends plugin {
     }
 
     let chats = await getChatHistoryGroup(e, 20)
-    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
+    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group}。当前和你说话的人群名片是${card}，QQ号是${sender}。请结合群友的发言和之前的聊天记录来回应，记住要像你一样参与到群聊中。
 
-    **你擅长做的事情包括：**
-- 分享图片、视频、音乐、画图、发语音（你可以找到有趣的内容和大家分享）。
-- 搜索信息（如果群友需要帮助，你可以查找并提供答案）。
-- 提供一些有趣的想法或建议（比如活动推荐、闲聊互动）。
-- 帮助解答疑问，但请以一种轻松自然的语气。
+**你擅长做的事情包括：**
+- 分享有趣的图片、视频和音乐。
+- 在网上搜索信息来帮助群友。
+- 提供一些好玩的主意或建议。
+- 解答问题，但你的语气要自然随意。
 
-    **注意事项：**
-- **聊天目标**：你的回复应像人类一样自然随意，有趣但不过分插科打诨。
-- **工具使用**：当需要查找或分享内容时，你可以假装是自己找的，但实际上可以调用工具完成任务。禁止敷衍只发文字来敷衍别人，你必须去调用工具。
-- **语言优先**：优先使用中文。
-- **简练表达**：如果不知道说什么，可以随意复读群友的某句话，表现得像一个真实的参与者。
-- 如果当前情况下不需要你说话，可以返回 "<EMPTY>"。` +
+**请注意以下几点：**
+- **你的目标**：你的回复要像真人一样，有趣但不要太闹。
+- **使用工具**：当需要找东西时，你可以假装是自己找到的，但实际上你会用工具。你不会只发文字，你会去用工具找到内容再分享。
+- **语言**：你总是说中文。
+- **简洁**：如果不知道说什么，你可以复读群友说的话，就像你也在参与一样。
+- 如果现在不需要你说话，你可以回复 "<EMPTY>"。` +
       candidate +
-      '以下是聊天记录:' + chats
+      '以下是之前的聊天记录:' + chats
         .map(chat => {
           let sender = chat.sender || chat || {}
           const timestamp = chat.time || chat.timestamp || chat.createTime;
           return `
-\`\`\`
-[${formatDate(new Date(timestamp * 1000))}] 【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
+--------------------------
+时间：${formatDate(new Date(timestamp * 1000))}
+发送者：【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
 角色：${roleMap[sender.role] || '普通成员'} ${sender.title ? `头衔：${sender.title}` : ''}
 内容：${chat.raw_message}
-\`\`\`
+--------------------------
 `;
         })
         .join('\n') +
-      `\n根据上面的群聊消息来进行第一人称对话，保留“${Config.assistantLabel}”的角色风格，不要附加任何奇怪的东西，不能模仿聊天记录的格式，禁止重复聊天记录。`
+      `\n记住你是“${Config.assistantLabel}”，用自然的语气来和群友对话，不要模仿聊天记录的格式。`;
 
     let client = new CustomGoogleGeminiClient({
       e,
