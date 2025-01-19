@@ -268,17 +268,28 @@ config.version = defaultConfig.version
 export const Config = new Proxy(config, {
   get(target, property) {
     if (property === 'getGeminiKey') {
-      return function () {
-        if (target["geminiKey"]?.length === 0) {
-          return "";
-        }
-        const geminiKeyArr = target["geminiKey"]?.trim().split(/[,，]/);
-        const randomIndex = Math.floor(Math.random() * geminiKeyArr.length);
-        logger.info(`[chatgpt]随机使用第${randomIndex + 1}个gemini Key: ${geminiKeyArr[randomIndex].replace(/(.{7}).*(.{10})/, '$1****$2')}`);
-        return geminiKeyArr[randomIndex];
-      }
+  return function () {
+    // 获取geminikey数组
+    const geminiKeys = target["geminikey"] || [];
+    
+    // 检查数组是否为空
+    if (!Array.isArray(geminiKeys) || geminiKeys.length === 0) {
+      logger.warn('[chatgpt]未找到有效的Gemini Key');
+      return "";
     }
-
+    
+    // 随机选择一个key
+    const randomIndex = Math.floor(Math.random() * geminiKeys.length);
+    const selectedKey = geminiKeys[randomIndex];
+    
+    // 日志输出，混淆key显示
+    logger.info(
+      `[chatgpt]随机使用第${randomIndex + 1}个Gemini Key: ${selectedKey.replace(/(.{7}).*(.{10})/, '$1****$2')}`
+    );
+    
+    return selectedKey;
+  }
+}
     return target[property]
   },
   set(target, property, value) {
