@@ -149,8 +149,10 @@ export class bym extends plugin {
       candidate = candidate + Config.bymFuckPrompt
     }
 
-    let chats = await getChatHistoryGroup(e, 20)
-    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
+    let chats = await getChatHistoryGroup(e, 20);
+    // **代码更新：添加对 chats 的判断**
+    if (Array.isArray(chats)) {
+      opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
 
     **你擅长做的事情包括：**
 - 分享图片、视频、音乐、画图、发语音（你可以找到有趣的内容和大家分享）。
@@ -164,21 +166,26 @@ export class bym extends plugin {
 - **语言优先**：优先使用中文。
 - **简练表达**：如果不知道说什么，可以随意复读群友的某句话，表现得像一个真实的参与者。
 - 如果当前情况下不需要你说话，可以返回 "<EMPTY>"。` +
-      candidate +
-      '以下是聊天记录:' + chats
-        .map(chat => {
-          let sender = chat.sender || chat || {}
-          const timestamp = chat.time || chat.timestamp || chat.createTime;
-          return `
+        candidate +
+        '以下是聊天记录:' + chats
+          .map(chat => {
+            let sender = chat.sender || chat || {}
+            const timestamp = chat.time || chat.timestamp || chat.createTime;
+            return `
 \`\`\`
 [${formatDate(new Date(timestamp * 1000))}] 【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
 角色：${roleMap[sender.role] || '普通成员'} ${sender.title ? `头衔：${sender.title}` : ''}
 内容：${chat.raw_message}
 \`\`\`
 `;
-        })
-        .join('\n') +
-      `\n根据上面的群聊消息来进行第一人称对话，保留“${Config.assistantLabel}”的角色风格，不要附加任何奇怪的东西，不能模仿聊天记录的格式，禁止重复聊天记录。`
+          })
+          .join('\n') +
+        `\n根据上面的群聊消息来进行第一人称对话，保留“${Config.assistantLabel}”的角色风格，不要附加任何奇怪的东西，不能模仿聊天记录的格式，禁止重复聊天记录。`;
+    } else {
+      // **代码更新：处理 chats 为非数组的情况**
+      logger.error('获取聊天记录失败或为空:', chats);
+      opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}。由于未能获取到完整的聊天记录，请根据用户的发言作出简洁的回应，并保持你随性的风格。`;
+    }
 
     let client = new CustomGoogleGeminiClient({
       e,
