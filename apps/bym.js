@@ -65,42 +65,34 @@ export class bym extends plugin {
                     fnc: 'bym',
                     priority: '-1000000',
                     log: false
+                },
+                // **代码更新：添加处理戳一戳事件的规则**
+                {
+                    event: 'notice.group.poke',
+                    fnc: 'handlePoke'
                 }
             ]
         });
-        // **代码更新：将事件监听移动到构造函数之后，依赖插件框架的初始化**
-        this.init();
     }
 
-    // **代码更新：初始化函数，用于注册事件监听**
-    async init() {
-        this.on('notice.group.poke', this.handleGroupPoke);
-    }
-
-    async handleGroupPoke(e) {
+    async handlePoke(e) {
+        logger.info('[戳一戳生效]')
         // **代码更新：检查戳戳回复开关**
         if (!Config.enablePokeReply) {
             return false;
         }
 
-        logger.info('[戳一戳生效]')
         if (e.target_id == Bot.uin) { // 机器人被戳
-            let count = await redis.get(`Mz:pokecount:${e.group_id}`);
-            // ... (戳戳计数逻辑) ...
-
-            // **代码更新：概率反击戳戳并触发 AI 回复**
+            // **代码更新：概率反击戳戳**
             if (Math.random() < Config.pokeReplyRate) {
+                e.reply('反击！')
+                await common.sleep(1000)
                 await e.group.pokeMember(e.operator_id);
-                await common.sleep(100);
-                e.msg = '被戳了一下，反击！'; // 设置消息内容触发 AI 回复
+            } else {
+                // **代码更新：机器人被戳后触发 AI 回复**
+                e.msg = '被戳了一下'; // 设置消息内容触发 AI 回复
                 await this.handleBym(e);
-                return; // 提前返回
             }
-
-            // **代码更新：机器人被戳后触发 AI 回复**
-            e.msg = '被戳了一下'; // 设置消息内容触发 AI 回复
-            await this.handleBym(e);
-
         } else if (cfg.masterQQ.includes(e.target_id)) { // 主人被戳
             logger.info('主人被戳了！');
             e.msg = Config.bymFuckTrigger || '主人被戳了'; // 设置消息内容触发包含 "fuck" prompt 的 AI 回复
@@ -179,7 +171,7 @@ export class bym extends plugin {
         opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
 
     **你擅长做的事情包括：**
-- 分享图片、视频、音乐、画图、发语音（你可以找到有趣的内容和大家分享）。
+- 分��图片、视频、音乐、画图、发语音（你可以找到有趣的内容和大家分享）。
 - 搜索信息（如果群友需要帮助，你可以查找并提供答案）。
 - 提供一些有趣的想法或建议（比如活动推荐、闲聊互动）。
 - 帮助解答疑问，但请以一种轻松自然的语气。
