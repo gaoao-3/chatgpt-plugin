@@ -76,9 +76,9 @@ export class bym extends plugin {
       return false;
     }
 
-    // **代码更新：处理引用自身消息的情况**
-    if (e.source && e.source.user_id === Bot.uin) {
-      logger.info('Received a message quoting myself, proceeding with response.');
+    // 处理引用消息的情况
+    if (e.source) {
+      logger.info('Received a quote message, proceeding with response.');
       await this.handleBym(e);
       return false;
     }
@@ -102,15 +102,34 @@ export class bym extends plugin {
       replyPureTextCallback: e.reply
     }
     let imgs = await getImg(e)
+
+    // **代码更新：处理引用消息**
+    if (e.source) {
+      const quoteMessage = await Bot.getMsg(e.source.id);
+      if (quoteMessage) {
+        if (quoteMessage.message) {
+          // 引用的文本消息
+          e.msg = quoteMessage.message;
+          logger.info('处理引用的文本消息:', e.msg);
+        } else if (quoteMessage.image) {
+          // 引用的图片消息
+          opt.image = quoteMessage.image; // 这里直接使用图片 URL 或 base64，取决于 oicqjs 的实现
+          e.msg = '[图片]';
+          logger.info('处理引用的图片消息:', quoteMessage.image);
+        }
+      }
+    }
+
+    // 如果 e.msg 为空，并且有检测到图片，则使用图片
     if (!e.msg) {
       if (imgs && imgs.length > 0) {
-        let image = imgs[0]
-        const response = await fetch(image)
-        const base64Image = Buffer.from(await response.arrayBuffer())
-        opt.image = base64Image.toString('base64')
-        e.msg = '[图片]'
+        let image = imgs[0];
+        const response = await fetch(image);
+        const base64Image = Buffer.from(await response.arrayBuffer());
+        opt.image = base64Image.toString('base64');
+        e.msg = '[图片]';
       } else {
-        return
+        return;
       }
     }
     if (!opt.image && imgs && imgs.length > 0) {
