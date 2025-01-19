@@ -69,17 +69,10 @@ export class bym extends plugin {
       return false
     }
 
-    // 处理 @Bot 的情况
+    // 新增：处理 @Bot 的情况
     if (e.atBot) {
       logger.info('Bot was mentioned, proceeding with response.');
-      await this.handleBym(e);
-      return false;
-    }
-
-    // 处理引用消息的情况
-    if (e.source) {
-      logger.info('Received a quote message, proceeding with response.');
-      await this.handleBym(e);
+      await this.handleBym(e); // 调用处理bym逻辑的函数
       return false;
     }
 
@@ -89,7 +82,7 @@ export class bym extends plugin {
     }
     if (prop < Config.bymRate) {
       logger.info('random chat hit')
-      await this.handleBym(e);
+      await this.handleBym(e); // 调用处理bym逻辑的函数
     }
     return false
   }
@@ -102,34 +95,15 @@ export class bym extends plugin {
       replyPureTextCallback: e.reply
     }
     let imgs = await getImg(e)
-
-    // **代码更新：处理引用消息**
-    if (e.source) {
-      const quoteMessage = await Bot.getMsg(e.source.id);
-      if (quoteMessage) {
-        if (quoteMessage.message) {
-          // 引用的文本消息
-          e.msg = quoteMessage.message;
-          logger.info('处理引用的文本消息:', e.msg);
-        } else if (quoteMessage.image) {
-          // 引用的图片消息
-          opt.image = quoteMessage.image; // 这里直接使用图片 URL 或 base64，取决于 oicqjs 的实现
-          e.msg = '[图片]';
-          logger.info('处理引用的图片消息:', quoteMessage.image);
-        }
-      }
-    }
-
-    // 如果 e.msg 为空，并且有检测到图片，则使用图片
     if (!e.msg) {
       if (imgs && imgs.length > 0) {
-        let image = imgs[0];
-        const response = await fetch(image);
-        const base64Image = Buffer.from(await response.arrayBuffer());
-        opt.image = base64Image.toString('base64');
-        e.msg = '[图片]';
+        let image = imgs[0]
+        const response = await fetch(image)
+        const base64Image = Buffer.from(await response.arrayBuffer())
+        opt.image = base64Image.toString('base64')
+        e.msg = '[图片]'
       } else {
-        return;
+        return
       }
     }
     if (!opt.image && imgs && imgs.length > 0) {
@@ -149,10 +123,8 @@ export class bym extends plugin {
       candidate = candidate + Config.bymFuckPrompt
     }
 
-    let chats = await getChatHistoryGroup(e, 20);
-    // **代码更新：添加对 chats 的判断**
-    if (Array.isArray(chats)) {
-      opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
+    let chats = await getChatHistoryGroup(e, 20)
+    opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。
 
     **你擅长做的事情包括：**
 - 分享图片、视频、音乐、画图、发语音（你可以找到有趣的内容和大家分享）。
@@ -166,26 +138,21 @@ export class bym extends plugin {
 - **语言优先**：优先使用中文。
 - **简练表达**：如果不知道说什么，可以随意复读群友的某句话，表现得像一个真实的参与者。
 - 如果当前情况下不需要你说话，可以返回 "<EMPTY>"。` +
-        candidate +
-        '以下是聊天记录:' + chats
-          .map(chat => {
-            let sender = chat.sender || chat || {}
-            const timestamp = chat.time || chat.timestamp || chat.createTime;
-            return `
+      candidate +
+      '以下是聊天记录:' + chats
+        .map(chat => {
+          let sender = chat.sender || chat || {}
+          const timestamp = chat.time || chat.timestamp || chat.createTime;
+          return `
 \`\`\`
 [${formatDate(new Date(timestamp * 1000))}] 【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
 角色：${roleMap[sender.role] || '普通成员'} ${sender.title ? `头衔：${sender.title}` : ''}
 内容：${chat.raw_message}
 \`\`\`
 `;
-          })
-          .join('\n') +
-        `\n根据上面的群聊消息来进行第一人称对话，保留“${Config.assistantLabel}”的角色风格，不要附加任何奇怪的东西，不能模仿聊天记录的格式，禁止重复聊天记录。`;
-    } else {
-      // **代码更新：处理 chats 为非数组的情况**
-      logger.error('获取聊天记录失败或为空:', chats);
-      opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}。由于未能获取到完整的聊天记录，请根据用户的发言作出简洁的回应，并保持你随性的风格。`;
-    }
+        })
+        .join('\n') +
+      `\n根据上面的群聊消息来进行第一人称对话，保留“${Config.assistantLabel}”的角色风格，不要附加任何奇怪的东西，不能模仿聊天记录的格式，禁止重复聊天记录。`
 
     let client = new CustomGoogleGeminiClient({
       e,
