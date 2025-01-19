@@ -208,6 +208,12 @@ const defaultConfig = {
     '尼玛',
     '艹'
   ],
+  // 伪人模式戳戳反击概率
+  pokeReplyRate: 0.3,
+  // 伪人模式主人被戳反击开关
+  enablePokeReply：true,
+  // 伪人模式戳戳回复
+  bymFuckTrigger: '主人被戳了',
   // 伪人骂人反击后是否撤回
   bymFuckRecall: true,
   // 伪人骂人反击的提示词
