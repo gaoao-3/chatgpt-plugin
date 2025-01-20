@@ -135,7 +135,7 @@ export class bym extends plugin {
       candidate = candidate + Config.bymFuckPrompt
     }
 
-    let chats = await getChatHistoryGroup(e, 20)
+    let chats = await getChatHistoryGroup(e, 50)
     opt.system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group}。当前和你说话的人群名片是${card}，QQ号是${sender}。请结合群友的发言和之前的聊天记录以及图片内容来回应，记住要像你一样参与到群聊中。
     ${opt.image && opt.image.length > 0 ? `你收到了 ${opt.image.length} 张图片，请根据图片内容进行回应。` : ''}
 
