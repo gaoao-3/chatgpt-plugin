@@ -181,5 +181,5 @@ export class HinaVoiceTool extends AbstractTool {
   };
 
   // 工具描述
-  description = '语音发送工具，输入想说的日语内容，进行语音发送，名词需要翻译成假名。';
+  description = '语音发送工具，输入你想说的话，并以日语文字进行生成发送，名字那些一定要使用假名';
 }
