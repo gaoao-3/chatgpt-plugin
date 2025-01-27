@@ -135,7 +135,7 @@ export class bym extends plugin {
       candidate = candidate + Config.bymFuckPrompt
     }
 
-    let chats = await getChatHistoryGroup(e, 50)
+    let chats = await getChatHistoryGroup(e, 30)
     opt.system = `你的名字是"${Config.assistantLabel}"。
 
 **群聊环境：**
