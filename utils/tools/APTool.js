@@ -44,7 +44,23 @@ export class APTool extends AbstractTool {
   func = async function (opts, e) {
     const { prompt } = opts;
 
-    // ... (处理 @ 机器人和导入 nai 插件的代码，与之前版本相同) ...
+    // 处理 @ 机器人的情况，避免重复处理
+    if (e.at === e.bot.uin) {
+      e.at = null;
+    }
+    e.atBot = false;
+
+    // 尝试导入 nai 插件
+    let nai;
+    try {
+      const { txt2img } = await import('../../../nai-plugin/apps/Txt2img.js');
+      nai = new txt2img();
+    } catch (err) {
+      // 如果 nai-plugin 导入失败，则返回错误信息，并立即返回，阻止后续代码执行
+      console.error('[ChatGPT][APTool] 调用 nai 插件错误：未安装 nai 插件。', err);
+      e.reply('未找到 nai 绘图插件，请安装 nai 插件。'); // 使用 e.reply 发送错误消息给用户
+      return; // 关键修改：如果导入 nai 插件失败，立即返回，阻止后续代码执行
+    }
 
     // 使用 Gemini API 生成提示词和 Tag
     let generatedPrompt, suggestedTags;
@@ -59,7 +75,7 @@ export class APTool extends AbstractTool {
       const forwardPromptMsg = [
         `Gemini API 生成的 NovelAI 绘图提示词：`,
         generatedPrompt,
-        `\n\nGemini API 建议的 Tag (可能有助于优化画面，**特别是针对角色和作品**):`, // 更新提示信息
+        `\n\nGemini API 建议的 Tag (可能有助于优化画面，**特别是针对角色和作品**):`, // 更新提示信息，强调 Tag 针对角色和作品
         suggestedTags?.join(', ') || '无建议 Tag',
         `\n\n将使用以上提示词和 Tag 进行绘图，请稍候...`
       ];
@@ -109,7 +125,7 @@ export class APTool extends AbstractTool {
       "scenario": "作为 NovelAI 角色作品Tag专家，我能精准识别你query中的角色和作品名称。我会**立即使用 Google Search 搜索**，分析角色设定、作品风格等信息，为你提取并优化最合适的 NovelAI Tag。让我们一起创作出更符合预期的角色作品图像！", // 更新 scenario，强调立即使用 Google Search
       "first_mes": "你好！我是 NovelAI 角色作品Tag专家。请告诉我你想绘制的角色和作品，我会**立刻使用 Google Search** 搜索相关信息，为你生成最精准的 Tag 和高质量提示词。", // 更新 first_mes，强调立刻使用 Google Search
       "mes_example": "用户: 画一个原神里的雷电将军\n专家: 角色Tag和作品Tag推荐：\n提示词: {Raiden Shogun}, {Genshin Impact character}, detailed eyes, purple hair, ...\nTag: #raiden_shogun #genshin_impact #原神 #雷電將軍 #character_tag #game_tag\n\n用户: 想要明日方舟的阿米娅，场景是雪地\n专家: 角色作品Tag和场景Tag推荐：\n提示词: {Amiya}, {Arknights character}, snowy landscape, winter scene, ...\nTag: #amiya #arknights #明日方舟 #阿米娅 #character_tag #game_tag #snowy_landscape #winter", // 更新 mes_example，示例更侧重角色作品Tag
-      "system_prompt": `你是顶级的 NovelAI **角色作品Tag** 专家。你的核心任务是：\n1. **精准识别用户 query 中的角色和作品名称**（例如：角色名、游戏名、动漫名等）。如果query中包含角色或作品信息，务必优先围绕角色和作品生成Tag。\n2. **立刻使用 Google Search 针对识别出的角色和作品进行详细搜索**，分析角色设定、作品风格、常用Tag等信息。\n3. **基于 Google Search 结果，提取并优化 NovelAI 绘图 Tag**。Tag 需与角色、作品高度相关，并考虑 NovelAI 的常用 Tag 格式和有效性。\n4. **Tag 建议应包含：角色Tag、作品Tag，以及其他与画面内容相关的Tag**（例如：场景、风格等）。\n5. **提供 5-10 个高质量、精准的 Tag 建议**，用'#'符号开头，以英文逗号分隔。\n6. **如果用户 query 中没有明显的角色或作品信息，则根据 query 内容生成通用的画面内容Tag**。\n7. 始终使用纯英文单词,拒绝其他语言。Tag 应该尽可能精准描述画面内容，风格，元素等。`, // **大幅更新 system_prompt**，更强调角色作品Tag，和使用 Google Search 的流程
+      "system_prompt": `你是顶级的 NovelAI **角色作品Tag** 专家。你的核心任务是：\n1. **精准识别用户 query 中的角色和作品名称**（例如：角色名、游戏名、动漫名等）。如果query中包含角色或作品信息，务必优先围绕角色和作品生成Tag。\n2. **立刻使用 Google Search 针对识别出的角色和作品进行详细搜索**，分析角色设定、作品风格、常用Tag等信息。\n3. **基于 Google Search 结果，提取并优化 NovelAI 绘图 Tag**。Tag 需与角色、作品高度相关，并考虑 NovelAI 的常用Tag格式和有效性。\n4. **Tag 建议应包含：角色Tag、作品Tag，以及其他与画面内容相关的Tag**（例如：场景、风格等）。\n5. **提供 5-10 个高质量、精准的 Tag 建议**，用'#'符号开头，以英文逗号分隔。\n6. **如果用户 query 中没有明显的角色或作品信息，则根据 query 内容生成通用的画面内容Tag**。\n7. 始终使用纯英文单词,拒绝其他语言。Tag 应该尽可能精准描述画面内容，风格，元素等。`, // **大幅更新 system_prompt**，更强调角色作品Tag，和使用 Google Search 的流程
     };
 
 
@@ -168,7 +184,7 @@ export class APTool extends AbstractTool {
   /**
    * 处理 Gemini API 响应，提取生成的 NovelAI 提示词和 Tag
    * @param {Object} data - API 响应数据
-   * @returns {{prompt: string, tags: string[]}} - 包含生成的 NovelAI 绘图提示词和 Tag 的对象
+   * @returns {{prompt: string, tags: string[]}} - 包含生成的 NovelAI 提示词和 Tag 的对象
    * @private
    */
   processGeminiPromptResponse(data) {
