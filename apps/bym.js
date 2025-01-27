@@ -22,7 +22,7 @@ import { GoogleSearchTool } from '../utils/tools/GoogleSearchTool.js'
 import { UrlExtractionTool } from '../utils/tools/UrlExtractionTool.js'
 import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
 import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
-import { APTool } from '../utils/tools/APTool.js'
+import { DrawTool } from '../utils/tools/DrawTool.js'
 import { HinaVoiceTool } from '../utils/tools/HinaVoiceTool.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 
@@ -179,7 +179,7 @@ ${chats
     })
     .join('\n')}
 
-请记住你的名字是"${Config.assistantLabel}"，用轻松自然的语气和群友们愉快交流吧！
+请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
 `;
 
     let client = new CustomGoogleGeminiClient({
@@ -203,7 +203,7 @@ ${chats
       new SendMusicTool(),
       new SendPictureTool(),
       new GoogleSearchTool(),
-      new APTool(),
+      new Drawool(),
       new HinaVoiceTool(),
       new GLMSearchTool(),
       new UrlExtractionTool(),
