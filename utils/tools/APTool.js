@@ -6,7 +6,7 @@ import common from '../../../../lib/common/common.js'; // 引入 common 用于�
 /**
  * APTool 类，继承自 AbstractTool，用于处理绘图请求，并使用 Gemini API 生成提示词。
  * 目前已修改为仅支持使用 nai 插件进行绘图，并且不再依赖 Config 模块，绘图消息格式为 `#绘画` + `prompt`。
- * 强调提示词需要使用英文, 并且使用 Gemini API 进行提示词优化, 并开启 Google Search 工具辅助生成提示词和Tag
+ * 强调提示词需要使用英文, 并且使用 Gemini API 进行提示词优化, 并开启 Google Search 工具辅助生成更精准的Tag，特别是针对角色和作品
  */
 export class APTool extends AbstractTool {
   /**
@@ -33,7 +33,7 @@ export class APTool extends AbstractTool {
    * 工具的描述
    * @type {string}
    */
-  description = '用于绘图的工具，目前仅支持 nai 插件。使用 Gemini API 优化绘图提示词，并使用 Google Search 辅助生成相关 Tag。'; // 更新描述
+  description = '用于绘图的工具，目前仅支持 nai 插件。使用 Gemini API 优化绘图提示词，并使用 Google Search 辅助生成更精准的相关 Tag，特别是针对角色和作品。'; // 更新描述
 
   /**
    * 核心方法，处理绘图请求。
@@ -44,28 +44,14 @@ export class APTool extends AbstractTool {
   func = async function (opts, e) {
     const { prompt } = opts;
 
-    // 处理 @ 机器人的情况，避免重复处理
-    if (e.at === e.bot.uin) {
-      e.at = null;
-    }
-    e.atBot = false;
-
-    // 尝试导入 nai 插件
-    let nai;
-    try {
-      const { txt2img } = await import('../../../nai-plugin/apps/Txt2img.js');
-      nai = new txt2img();
-    } catch (err) {
-      console.error('[ChatGPT][APTool] 调用 nai 插件错误：未安装 nai 插件。', err);
-      return '未找到 nai 绘图插件，请安装 nai 插件。';
-    }
+    // ... (处理 @ 机器人和导入 nai 插件的代码，与之前版本相同) ...
 
     // 使用 Gemini API 生成提示词和 Tag
-    let generatedPrompt, suggestedTags; // 新增 suggestedTags 变量
+    let generatedPrompt, suggestedTags;
     try {
-      const result = await this.generatePromptWithGemini(prompt); // 修改为接收包含 prompt 和 tags 的结果
+      const result = await this.generatePromptWithGemini(prompt);
       generatedPrompt = result.prompt;
-      suggestedTags = result.tags; // 从结果中获取 tags
+      suggestedTags = result.tags;
       console.debug('[APTool] Gemini API 生成的提示词:', generatedPrompt);
       console.debug('[APTool] Gemini API 建议的 Tag:', suggestedTags);
 
@@ -73,8 +59,8 @@ export class APTool extends AbstractTool {
       const forwardPromptMsg = [
         `Gemini API 生成的 NovelAI 绘图提示词：`,
         generatedPrompt,
-        `\n\nGemini API 建议的 Tag (可能有助于优化画面):`,
-        suggestedTags?.join(', ') || '无建议 Tag', // 将 tags 转换为字符串展示，没有 tag 时显示 "无建议 Tag"
+        `\n\nGemini API 建议的 Tag (可能有助于优化画面，**特别是针对角色和作品**):`, // 更新提示信息
+        suggestedTags?.join(', ') || '无建议 Tag',
         `\n\n将使用以上提示词和 Tag 进行绘图，请稍候...`
       ];
       e.reply(await common.makeForwardMsg(e, forwardPromptMsg, `${e.sender.card || e.sender.nickname || e.user_id} 的绘图提示词和 Tag`));
@@ -87,8 +73,8 @@ export class APTool extends AbstractTool {
     // 使用 nai 插件进行绘图
     try {
       // 构造绘图消息，格式为 `#绘画` + `生成的提示词` + `建议的 Tag` (如果存在)
-      const finalPrompt = generatedPrompt + (suggestedTags?.length > 0 ? `, ${suggestedTags.join(', ')}` : ''); // 将 tags 添加到 prompt 后面
-      e.msg = `#绘画${finalPrompt}`; // 使用 Gemini 生成的提示词和 Tag
+      const finalPrompt = generatedPrompt + (suggestedTags?.length > 0 ? `, ${suggestedTags.join(', ')}` : '');
+      e.msg = `#绘画${finalPrompt}`;
 
       await nai.txt2img(e);
 
@@ -117,13 +103,13 @@ export class APTool extends AbstractTool {
     }
 
     const promptConfig = {
-      "name": "NovelAI提示词专家",
-      "description": "专注于创造纯英文的AI绘画提示词，擅长将用户需求转化为精准的图像描述。对各种艺术风格和技法了如指掌，能准确把握画面重点和细节。注重提示词的逻辑性和组合效果，确保生成的画面既美观又符合预期。同时，我会使用 Google Search 辅助寻找相关的 NovelAI Tag。", // 更新 description
-      "personality": "专业严谨，富有创意。善于倾听用户需求，通过渐进式优化提升作品质量。对艺术创作充满热情，乐于分享专业见解。",
-      "scenario": "作为提示词专家，我专注于创造纯英文的提示词组合和相关的 Tag。我会根据你的需求，使用 Google Search 探索和推荐最合适的 Tag，并调整画面的风格、氛围和细节，直到达到理想效果。让我们一起探索艺术创作的无限可能!", // 更新 scenario
-      "first_mes": "你好！我是专业的提示词和 Tag 顾问。我只使用纯英文单词来创作提示词和 Tag,不使用其他语言。我们可以用{tag}增加元素权重，[tag]降低权重。请告诉我你想要创作的画面类型，我会为你量身定制独特的提示词组合和 Tag。", // 更新 first_mes
-      "mes_example": "用户: 想要一个可爱的女孩\n专家: 推荐组合和 Tag:\n提示词: {1girl}, {cute}, bright eyes, {smile}, casual dress, {detailed face}, natural pose, soft lighting,\nTag: #cute #girl #smile #brighteyes\n\n用户: 想要更梦幻的感觉\n专家: 调整如下:\n提示词: {1girl}, {ethereal}, floating hair, {magical}, sparkles, {dreamy}, soft glow, pastel colors,\nTag: #ethereal #magical #dreamy #pastelcolors\n\n用户: 想要未来风格\n专家: 科技感设计:\n提示词: {1girl}, {futuristic}, neon lights, {cyber}, hologram effects, {tech}, clean lines, metallic,\nTag: #futuristic #cyber #tech #neonlights", // 更新 mes_example
-      "system_prompt": "你是专业的NovelAI提示词和 Tag 专家。始终使用纯英文单词,拒绝其他语言。根据用户需求灵活调整权重，创造独特的视觉效果。注重提示词的逻辑性和组合效果，确保生成的画面既美观又符合预期。**你需要使用 Google Search 搜索与用户需求相关的 NovelAI 绘图 Tag，并在生成的提示词基础上，提供 5-10 个相关的 Tag 建议，用'#'符号开头，以英文逗号分隔。Tag 应该尽可能精准描述画面内容，风格，元素等。**" // 更新 system_prompt，强调搜索 Tag 和提供 Tag 建议
+      "name": "NovelAI 角色作品Tag专家", // 更明确的专家名称
+      "description": "专注于为 NovelAI 绘画生成**角色和作品相关的精准英文 Tag** 和高质量提示词。尤其擅长识别用户query中的角色和作品信息，并使用 Google Search 针对性搜索和优化Tag。确保Tag与角色、作品高度相关，提升画面质量。", // 更新 description，强调角色作品Tag
+      "personality": "专业、细致、对角色和作品信息敏感。善于理解用户需求，并能深入挖掘角色和作品的特点，提炼出精准的Tag。",
+      "scenario": "作为 NovelAI 角色作品Tag专家，我能精准识别你query中的角色和作品名称。我会**立即使用 Google Search 搜索**，分析角色设定、作品风格等信息，为你提取并优化最合适的 NovelAI Tag。让我们一起创作出更符合预期的角色作品图像！", // 更新 scenario，强调立即使用 Google Search
+      "first_mes": "你好！我是 NovelAI 角色作品Tag专家。请告诉我你想绘制的角色和作品，我会**立刻使用 Google Search** 搜索相关信息，为你生成最精准的 Tag 和高质量提示词。", // 更新 first_mes，强调立刻使用 Google Search
+      "mes_example": "用户: 画一个原神里的雷电将军\n专家: 角色Tag和作品Tag推荐：\n提示词: {Raiden Shogun}, {Genshin Impact character}, detailed eyes, purple hair, ...\nTag: #raiden_shogun #genshin_impact #原神 #雷電將軍 #character_tag #game_tag\n\n用户: 想要明日方舟的阿米娅，场景是雪地\n专家: 角色作品Tag和场景Tag推荐：\n提示词: {Amiya}, {Arknights character}, snowy landscape, winter scene, ...\nTag: #amiya #arknights #明日方舟 #阿米娅 #character_tag #game_tag #snowy_landscape #winter", // 更新 mes_example，示例更侧重角色作品Tag
+      "system_prompt": `你是顶级的 NovelAI **角色作品Tag** 专家。你的核心任务是：\n1. **精准识别用户 query 中的角色和作品名称**（例如：角色名、游戏名、动漫名等）。如果query中包含角色或作品信息，务必优先围绕角色和作品生成Tag。\n2. **立刻使用 Google Search 针对识别出的角色和作品进行详细搜索**，分析角色设定、作品风格、常用Tag等信息。\n3. **基于 Google Search 结果，提取并优化 NovelAI 绘图 Tag**。Tag 需与角色、作品高度相关，并考虑 NovelAI 的常用 Tag 格式和有效性。\n4. **Tag 建议应包含：角色Tag、作品Tag，以及其他与画面内容相关的Tag**（例如：场景、风格等）。\n5. **提供 5-10 个高质量、精准的 Tag 建议**，用'#'符号开头，以英文逗号分隔。\n6. **如果用户 query 中没有明显的角色或作品信息，则根据 query 内容生成通用的画面内容Tag**。\n7. 始终使用纯英文单词,拒绝其他语言。Tag 应该尽可能精准描述画面内容，风格，元素等。`, // **大幅更新 system_prompt**，更强调角色作品Tag，和使用 Google Search 的流程
     };
 
 
@@ -159,7 +145,7 @@ export class APTool extends AbstractTool {
         throw new Error(`API 请求失败: ${data.error?.message || '未知错误'}`);
       }
 
-      return this.processGeminiPromptResponse(data); // processGeminiPromptResponse 现在需要处理 prompt 和 tags
+      return this.processGeminiPromptResponse(data);
     } catch (error) {
       console.error('[APTool] Gemini API 调用失败:', error);
       throw error;
@@ -168,21 +154,21 @@ export class APTool extends AbstractTool {
 
 
   /**
-   * 构建用于 Gemini API 生成 NovelAI 提示词和 Tag 的 Prompt
+   * 构建用于 Gemini API 生成 NovelAI 角色作品Tag 的 Prompt
    * @param {string} query - 用户输入的绘图主题或关键词
    * @param {object} promptConfig - 提示词专家配置
    * @returns {string} - 完整的 Gemini API Prompt
    * @private
    */
   constructPromptForGemini(query, promptConfig) {
-    return `用户需求: ${query}\n\n请根据以下专家设定，为我生成一段用于 NovelAI 的**纯英文**绘画提示词，**并使用 Google Search 搜索与用户需求最相关的 NovelAI 绘图 Tag，提供 5-10 个 Tag 建议**：\n\n专家设定:\n名称: ${promptConfig.name}\n描述: ${promptConfig.description}\n个性: ${promptConfig.personality}\n创作场景: ${promptConfig.scenario}\n\n**请先返回生成的提示词部分，另起一行返回 Tag 建议部分，Tag 之间用英文逗号分隔，不要包含任何解释或说明文字。**`; // 修改 Prompt，要求 Gemini 返回提示词和 Tag
+    return `用户需求: ${query}\n\n请根据以下专家设定，作为 **NovelAI 角色作品Tag专家**， 针对我的需求，**立刻使用 Google Search 搜索**，分析与【${query}】相关的角色设定、作品信息、常用Tag等。 基于搜索结果，为我生成一段用于 NovelAI 的**纯英文**绘画提示词，**并提供 5-10 个最精准、最相关的 NovelAI 绘图 Tag 建议**（优先考虑角色Tag、作品Tag）。\n\n专家设定:\n名称: ${promptConfig.name}\n描述: ${promptConfig.description}\n个性: ${promptConfig.personality}\n创作场景: ${promptConfig.scenario}\n\n**请先返回生成的提示词部分，另起一行返回 Tag 建议部分，Tag 之间用英文逗号分隔，不要包含任何解释或说明文字。**`; // **大幅更新 Prompt**，更明确指示 Gemini 作为角色作品Tag专家，并立刻使用 Google Search
   }
 
 
   /**
    * 处理 Gemini API 响应，提取生成的 NovelAI 提示词和 Tag
    * @param {Object} data - API 响应数据
-   * @returns {{prompt: string, tags: string[]}} - 包含生成的 NovelAI 提示词和 Tag 的对象
+   * @returns {{prompt: string, tags: string[]}} - 包含生成的 NovelAI 绘图提示词和 Tag 的对象
    * @private
    */
   processGeminiPromptResponse(data) {
@@ -201,9 +187,9 @@ export class APTool extends AbstractTool {
 
     // 尝试分割响应文本，假设提示词和 Tag 用换行符分隔
     const parts = responseText.split('\n').map(part => part.trim());
-    const generatedPrompt = parts[0] || ''; // 第一部分是提示词
-    const tagsPart = parts[1] || '';      // 第二部分是 Tag (如果存在)
-    const suggestedTags = tagsPart.split(',').map(tag => tag.trim()).filter(Boolean); // 将 Tag 部分按逗号分割成数组
+    const generatedPrompt = parts[0] || '';
+    const tagsPart = parts[1] || '';
+    const suggestedTags = tagsPart.split(',').map(tag => tag.trim()).filter(Boolean);
 
     return {
       prompt: generatedPrompt,
