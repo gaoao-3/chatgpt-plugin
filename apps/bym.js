@@ -203,7 +203,7 @@ ${chats
       new SendMusicTool(),
       new SendPictureTool(),
       new GoogleSearchTool(),
-      new Drawool(),
+      new DrawTool(),
       new HinaVoiceTool(),
       new GLMSearchTool(),
       new UrlExtractionTool(),
