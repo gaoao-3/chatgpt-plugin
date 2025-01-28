@@ -25,7 +25,6 @@ import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
 import { DrawTool } from '../utils/tools/DrawTool.js'
 import { HinaVoiceTool } from '../utils/tools/HinaVoiceTool.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
-
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
   const date = new Date(timestamp);
@@ -37,13 +36,11 @@ function formatDate(timestamp) {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-
 const roleMap = {
   owner: '群主',
   admin: '管理员',
   member: '普通成员',
 }
-
 export class bym extends plugin {
   constructor () {
     super({
@@ -62,20 +59,17 @@ export class bym extends plugin {
       ]
     })
   }
-
   /** 复读 */
   async bym (e) {
     if (!Config.enableBYM) {
       return false
     }
-
     // 新增：处理 @Bot 的情况
     if (e.atBot) {
       logger.info('Bot was mentioned, proceeding with response.');
       await this.handleBym(e); // 调用处理bym逻辑的函数
       return false;
     }
-
     let prop = Math.floor(Math.random() * 100)
     if (Config.assistantLabel && e.msg?.includes(Config.assistantLabel)) {
       prop = -1
@@ -86,7 +80,28 @@ export class bym extends plugin {
     }
     return false
   }
-
+  /**
+   * 异步处理图片，转换为Base64格式.
+   * @param {string[]} imgs 图片URL数组
+   * @returns {Promise<string[]>} Base64 编码的图片数据数组
+   */
+  async processImages(imgs) {
+    if (!imgs || imgs.length === 0) {
+      return []; // 如果没有图片，直接返回空数组
+    }
+    return Promise.all(
+      imgs.map(async (image) => {
+        try {
+          const response = await fetch(image);
+          const arrayBuffer = await response.arrayBuffer();
+          return Buffer.from(arrayBuffer).toString('base64');
+        } catch (error) {
+          logger.error('Error fetching or converting image:', image, error);
+          return null; // 转换失败返回 null，在后续步骤中过滤掉
+        }
+      })
+    ).then(results => results.filter(result => result !== null)); // 过滤掉转换失败的 null 值
+  }
   // 抽取出来的处理 bym 逻辑的函数
   async handleBym(e) {
     let opt = {
@@ -102,57 +117,39 @@ export class bym extends plugin {
         return
       }
     }
-
     // 处理多图逻辑
     if (imgs && imgs.length > 0) {
-      opt.image = []; // 初始化一个数组来存储 base64 图像数据
-      for (const image of imgs) {
-        try {
-          const response = await fetch(image);
-          const arrayBuffer = await response.arrayBuffer();
-          const base64Image = Buffer.from(arrayBuffer).toString('base64');
-          opt.image.push(base64Image);
-        } catch (error) {
-          logger.error('Error fetching or converting image:', error);
-          // 可以选择跳过当前图片或进行其他错误处理
-        }
-      }
-      if (opt.image.length > 0) {
+      const base64Images = await this.processImages(imgs); // 使用 processImages 函数处理图片
+      if (base64Images.length > 0) {
+        opt.image = base64Images; // 将处理后的 base64 图片数据赋值给 opt.image
         e.msg = `[共${opt.image.length}张图片] ${e.msg || ''}`.trim(); // 更新消息内容，告知模型图片数量
       } else {
-        delete opt.image; // 如果处理图片失败，移除 image 属性
+        delete opt.image; // 如果处理图片后没有可用的图片数据，移除 image 属性
       }
     }
-
     let sender = e.sender.user_id
     let card = e.sender.card || e.sender.nickname
     let group = e.group_id
-
     let fuck = false
     let candidate = Config.bymPreset
     if (Config.bymFuckList?.find(i => e.msg.includes(i))) {
       fuck = true
       candidate = candidate + Config.bymFuckPrompt
     }
-
     let chats = await getChatHistoryGroup(e, 30)
     opt.system = `你的名字是"${Config.assistantLabel}"。
-
 **群聊环境：**
 *   当前你所在的QQ群群号是 ${group}。
 *   正在与你对话的群友，他们的群名片是 ${card}，QQ号是 ${sender}。
-
 **你的任务：**
 *   融入当前的QQ群聊，像群里的朋友一样自然地参与对话。
 *   结合群友的发言、之前的聊天记录和任何接收到的图片内容，做出贴切且有趣的回应。
 ${opt.image && opt.image.length > 0 ? `*   你已收到 ${opt.image.length} 张图片，请根据图片内容进行回应，让群友感受到你的关注。` : ''}
-
 **你可以做：**
 *   分享有趣的图片、视频和音乐，活跃群聊气氛，给大家带来轻松和快乐。
 *   快速在网络上搜索信息，解答群友的疑问，或找到他们可能感兴趣的内容。
 *   提供有创意、好玩的想法和建议，例如组织群活动或发起有趣的话题。
 *   以轻松、口语化的方式回答问题，避免使用正式或严肃的语气。
-
 **行为注意：**
 *   **目标：** 你的回复要自然、有趣、贴近群聊的日常氛围，但避免过于活跃或刷屏。
 *   **工具运用：** 当需要查找信息时，你可以自然地使用工具，并将找到的内容分享出来，让群友感觉是你自己发现并分享的。
@@ -160,10 +157,8 @@ ${opt.image && opt.image.length > 0 ? `*   你已收到 ${opt.image.length} 张�
 *   **表达：**  如果一时没有特别的想法，可以简洁地回应群友，表示你在关注群聊。
 *   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>"。
 ` + candidate + `
-
 **背景信息：**
 以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。
-
 ${chats
     .map(chat => {
         let sender = chat.sender || chat || {};
@@ -178,10 +173,8 @@ ${chats
 `;
     })
     .join('\n')}
-
 请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
 `;
-
     let client = new CustomGoogleGeminiClient({
       e,
       userId: e.sender.user_id,
