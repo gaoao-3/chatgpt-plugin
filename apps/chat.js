@@ -794,7 +794,7 @@ export class chatgpt extends plugin {
           if (lyrics !== '') {
             sunoList.push(
               {
-                json: { option: 'Suno', tags: client.generateRandomStyle(), title: `${e.sender.nickname}之歌`, lyrics: lyrics },
+                json: { option: 'Suno', tags: client.generateRandomStyle(), title: `${e.sender.nickname}之歌`, lyrics },
                 markdown: null,
                 origin: lyrics
               }
@@ -823,11 +823,12 @@ export class chatgpt extends plugin {
         }
       }
       let response = chatMessage?.text?.replace('\n\n\n', '\n')
-      
+      let thinking = chatMessage.thinking_text
       if (handler.has('chatgpt.response.post')) {
         logger.debug('调用后处理器: chatgpt.response.post')
         handler.call('chatgpt.response.post', this.e, {
           content: response,
+          thinking,
           use,
           prompt
         }, true).catch(err => {
@@ -1042,6 +1043,10 @@ export class chatgpt extends plugin {
             suggested: chatMessage.suggestedResponses
           }
         })
+        if (thinking) {
+          let thinkingForward = await common.makeForwardMsg(e, [thinking], '思考过程')
+          this.reply(thinkingForward)
+        }
         if (Config.enableSuggestedResponses && chatMessage.suggestedResponses) {
           this.reply(`建议的回复：\n${chatMessage.suggestedResponses}`)
         }

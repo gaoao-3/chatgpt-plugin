@@ -2,6 +2,7 @@ import Keyv from 'keyv'
 
 export type Role = 'user' | 'assistant' | 'system' | 'function'
 
+import fetch from 'node-fetch'
 export type FetchFn = typeof fetch
 
 export type ChatGPTAPIOptions = {
@@ -67,6 +68,7 @@ export type SendMessageBrowserOptions = {
 export interface ChatMessage {
     id: string
     text: string
+    thinking_text?: string
     role: Role
     name?: string
     delta?: string
@@ -204,6 +206,7 @@ export namespace openai {
                 delta: {
                     role: Role
                     content?: string,
+                    reasoning_content?: string,
                     function_call?: FunctionCall,
                     tool_calls: ToolCall[]
                 }
