@@ -288,7 +288,7 @@ export namespace openai {
          * @memberof ChatCompletionResponseMessage
          */
         content: string
-
+        reasoning_content: string
         function_call: FunctionCall,
         tool_calls: ToolCall[]
     }

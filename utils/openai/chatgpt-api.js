@@ -304,6 +304,7 @@ var ChatGPTAPI = /** @class */ (function () {
                                             else if (message_1.tool_calls) {
                                                 result.functionCall = message_1.tool_calls.map(function (tool) { return tool.function; })[0];
                                             }
+                                            result.thinking_text = message_1.reasoning_content;
                                             if (message_1.role) {
                                                 result.role = message_1.role;
                                             }
