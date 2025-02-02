@@ -106,7 +106,7 @@ export class bym extends plugin {
   async handleBym(e) {
     let opt = {
       maxOutputTokens: 500,
-      temperature: 1,
+      temperature: 0.7,
       replyPureTextCallback: e.reply
     }
     let imgs = await getImg(e)
