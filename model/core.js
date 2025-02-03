@@ -51,6 +51,12 @@ import { SerpTool } from '../utils/tools/SerpTool.js'
 import common from '../../../lib/common/common.js'
 import { SendDiceTool } from '../utils/tools/SendDiceTool.js'
 import { EliMovieTool } from '../utils/tools/EliMovieTool.js'
+import { GoogleSearchTool } from '../utils/tools/GoogleSearchTool.js'
+import { UrlExtractionTool } from '../utils/tools/UrlExtractionTool.js'
+import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
+import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
+import { DrawTool } from '../utils/tools/DrawTool.js'
+import { HinaVoiceTool } from '../utils/tools/HinaVoiceTool.js'
 import { EliMusicTool } from '../utils/tools/EliMusicTool.js'
 import { HandleMessageMsgTool } from '../utils/tools/HandleMessageMsgTool.js'
 import { ProcessPictureTool } from '../utils/tools/ProcessPictureTool.js'
@@ -765,6 +771,12 @@ class Core {
           new SerpImageTool(),
           new SearchMusicTool(),
           new SendMusicTool(),
+          new GoogleSearchTool(),
+          new DrawTool(),
+          new HinaVoiceTool(),
+          new GLMSearchTool(),
+          new UrlExtractionTool(),
+          new CodeExecutionTool(),
           new SendAudioMessageTool(),
           new APTool(),
           new SendMessageToSpecificGroupOrUserTool(),
@@ -1028,6 +1040,12 @@ async function collectTools (e) {
     new SearchMusicTool(),
     new SendMusicTool(),
     new SerpIkechan8370Tool(),
+    new GoogleSearchTool(),
+    new DrawTool(),
+    new HinaVoiceTool(),
+    new GLMSearchTool(),
+    new UrlExtractionTool(),
+    new CodeExecutionTool(),
     new SerpTool(),
     new SendAudioMessageTool(),
     new ProcessPictureTool(),
