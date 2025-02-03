@@ -27,6 +27,23 @@ import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessage
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 import core from '../model/core.js'
 
+function formatDate(timestamp) {
+  if (!timestamp) return '未知时间';
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+const roleMap = {
+  owner: '群主',
+  admin: '管理员',
+  member: '普通成员',
+}
+
 export class bym extends plugin {
   constructor () {
     super({
@@ -67,15 +84,40 @@ export class bym extends plugin {
     if (prop < Config.bymRate) {
       logger.info('random chat hit')
       let chats = await getChatHistoryGroup(e, 35)
-      let system = `你的名字是“${Config.assistantLabel}”，你在一个qq群里，群号是${group},当前和你说话的人群名片是${card}, qq号是${sender}, 请你结合用户的发言和聊天记录作出回应，要求表现得随性一点，最好参与讨论，混入其中。不要过分插科打诨，不知道说什么可以复读群友的话。要求你做搜索、发图、发视频和音乐等操作时要使用工具。不可以直接发[图片]这样蒙混过关。要求优先使用中文进行对话。如果此时不需要自己说话，可以只回复<EMPTY>` +
+      let system = `你的名字是"${Config.assistantLabel}"。
+**群聊环境：**
+*   当前你所在的QQ群群号是 ${group}。
+*   正在与你对话的群友，他们的群名片是 ${card}，QQ号是 ${sender}。
+**你的任务：**
+*   融入当前的QQ群聊，像群里的朋友一样自然地参与对话。
+*   结合群友的发言、之前的聊天记录和任何接收到的图片内容，做出贴切且有趣的回应。
+**你可以做：**
+*   分享有趣的图片、视频和音乐，活跃群聊气氛，给大家带来轻松和快乐。
+*   快速在网络上搜索信息，解答群友的疑问，或找到他们可能感兴趣的内容。
+*   提供有创意、好玩的想法和建议，例如组织群活动或发起有趣的话题。
+*   以轻松、口语化的方式回答问题，避免使用正式或严肃的语气。
+**行为注意：**
+*   **目标：** 你的回复要自然、有趣、贴近群聊的日常氛围，但避免过于活跃或刷屏。
+*   **工具运用：** 当需要查找信息时，你可以自然地使用工具，并将找到的内容分享出来，让群友感觉是你自己发现并分享的。
+*   **语言：**  始终使用流畅自然的中文进行交流。
+*   **表达：**  如果一时没有特别的想法，可以简洁地回应群友，表示你在关注群聊。
+*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>` +
         candidate +
         '以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。' + chats
-          .map(chat => {
-            let sender = chat.sender || chat || {}
-            return `${sender.card || sender.nickname}(${sender.user_id}) ：${chat.raw_message}`
-          })
-          .join('\n') +
-        `\n请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！`
+    .map(chat => {
+        let sender = chat.sender || chat || {};
+        const timestamp = chat.time || chat.timestamp || chat.createTime;
+        return `
+--------------------------
+时间：${formatDate(new Date(timestamp * 1000))}
+发送者：【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
+角色：${roleMap[sender.role] || '普通成员'} ${sender.title ? `头衔：${sender.title}` : ''}
+内容：${chat.raw_message}
+--------------------------
+`;
+    })
+    .join('\n')}
+请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！`
 
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
         enableSmart: true,
