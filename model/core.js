@@ -750,26 +750,19 @@ class Core {
   let imgs = await getImg(e);
   if (!e.msg && imgs && imgs.length > 0) {
     e.msg = '[图片]';
-  } else if (!imgs || imgs.length === 0) {
+  } else if (!imgs || imgs.length === 0 && !e.msg) {
     return;
   }
   if (imgs && imgs.length > 0) {
     const base64Images = await processImages(imgs);
-    if (base64Images.length > 0) {
+    if (base64Images && base64Images.length > 0) {
       option.image = base64Images;
       e.msg = `[共${base64Images.length}张图片] ${e.msg || ''}`.trim();
     } else {
       delete option.image;
     }
-  }
-  if (imgs && imgs.length > 0) {
-    const imageUrl = imgs[0];
-    let md5 = imageUrl.split(/[/-]/).find(s => s.length === 32)?.toUpperCase();
-    let imageLoc = await getOrDownloadFile(`ocr/${md5}.png`, imageUrl);
-    let outputLoc = imageLoc.replace(`${md5}.png`, `${md5}_512.png`);
-    await resizeAndCropImage(imageLoc, outputLoc, 512);
-    let buffer = fs.readFileSync(outputLoc);
-    option.image = buffer.toString('base64');
+  } else {
+    delete option.image;
   }
       if (opt.enableSmart) {
         /**
