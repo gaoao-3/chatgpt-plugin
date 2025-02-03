@@ -101,7 +101,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
    *     onProgress: function?,
    *     functionResponse: FunctionResponse?,
    *     system: string?,
-   *     image: string | string[],
+   *     image: string?,
    *     maxOutputTokens: number?,
    *     temperature: number?,
    *     topP: number?,
@@ -153,20 +153,14 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
           id: idThis,
           parentMessageId: opt.parentMessageId || undefined
         }
-
-    // 处理单张或多张图片
     if (opt.image) {
-      const images = Array.isArray(opt.image) ? opt.image : [opt.image];
-      for (const image of images) {
-        thisMessage.parts.push({
-          inline_data: {
-            mime_type: 'image/jpeg',
-            data: image
-          }
-        });
-      }
+      thisMessage.parts.push({
+        inline_data: {
+          mime_type: 'image/jpeg',
+          data: opt.image
+        }
+      })
     }
-
     history.push(_.cloneDeep(thisMessage))
     let url = `${this.baseUrl}/v1beta/models/${this.model}:generateContent`
     let body = {
