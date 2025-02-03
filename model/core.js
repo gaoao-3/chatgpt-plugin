@@ -750,12 +750,9 @@ class Core {
       const image = await getImg(e)
       let imageUrl = image ? image[0] : undefined
       if (imageUrl) {
-        let md5 = imageUrl.split(/[/-]/).find(s => s.length === 32)?.toUpperCase()
-        let imageLoc = await getOrDownloadFile(`ocr/${md5}.png`, imageUrl)
-        let outputLoc = imageLoc.replace(`${md5}.png`, `${md5}_512.png`)
-        await resizeAndCropImage(imageLoc, outputLoc, 512)
-        let buffer = fs.readFileSync(outputLoc)
-        option.image = buffer.toString('base64')
+        const response = await fetch(imageUrl)
+        const base64Image = Buffer.from(await response.arrayBuffer())
+        option.image = base64Image.toString('base64')
       }
       if (opt.enableSmart) {
         /**
