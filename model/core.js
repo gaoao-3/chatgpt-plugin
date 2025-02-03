@@ -59,7 +59,6 @@ import { ChatGPTAPI } from '../utils/openai/chatgpt-api.js'
 import { newFetch } from '../utils/proxy.js'
 import { ChatGLM4Client } from '../client/ChatGLM4Client.js'
 import { QwenApi } from '../utils/alibaba/qwen-api.js'
-import OpenAI from 'openai';
 
 const roleMap = {
   owner: 'group owner',
@@ -120,7 +119,21 @@ async function handleSystem (e, system) {
 }
 
 class Core {
-  async sendMessage (prompt, conversation = {}, use, e) {
+  async sendMessage (prompt, conversation = {}, use, e, opt = {
+    enableSmart: Config.smartMode,
+    system: {
+      api: Config.promptPrefixOverride,
+      qwen: Config.promptPrefixOverride,
+      bing: Config.sydney,
+      claude: Config.claudeSystemPrompt,
+      claude2: Config.claudeSystemPrompt,
+      gemini: Config.geminiPrompt,
+      xh: Config.xhPrompt
+    },
+    settings: {
+      replyPureTextCallback: undefined
+    }
+  }) {
     if (!conversation) {
       conversation = {
         timeoutMs: Config.defaultTimeoutMs
@@ -444,16 +457,6 @@ class Core {
         logger.warn('发送语音失败', err)
       })
       return sendMessageResult
-    } else if (use === 'chatglm') {
-      const cacheOptions = {
-        namespace: 'chatglm_6b',
-        store: new KeyvFile({ filename: 'cache.json' })
-      }
-      this.chatGPTApi = new ChatGLMClient({
-        user: e.sender.user_id,
-        cache: cacheOptions
-      })
-      return await this.chatGPTApi.sendMessage(prompt, conversation)
     } else if (use === 'claude') {
       // slack已经不可用，移除
       let keys = Config.claudeApiKey?.split(/[,;]/).map(key => key.trim()).filter(key => key)
@@ -469,11 +472,11 @@ class Core {
           baseUrl: Config.claudeApiBaseUrl
           // temperature: Config.claudeApiTemperature || 0.5
         })
-        let opt = {
+        let option = {
           stream: false,
           parentMessageId: conversation.parentMessageId,
           conversationId: conversation.conversationId,
-          system: Config.claudeSystemPrompt
+          system: opt.system.claude
         }
         let img = await getImg(e)
         if (img && img.length > 0) {
@@ -482,7 +485,7 @@ class Core {
           opt.image = base64Image
         }
         try {
-          let rsp = await client.sendMessage(prompt, opt)
+          let rsp = await client.sendMessage(prompt, option)
           return rsp
         } catch (err) {
           errorMessage = err.message
@@ -568,7 +571,7 @@ class Core {
         e,
         chatId: conversation?.conversationId,
         image: image ? image[0] : undefined,
-        system: Config.xhPrompt
+        system: opt.system.xh
       })
       return response
     } else if (use === 'azure') {
@@ -623,7 +626,7 @@ class Core {
         debug: Config.debug,
         upsertMessage: um,
         getMessageById: gm,
-        systemMessage: `You are ${Config.assistantLabel} ${useCast?.api || Config.promptPrefixOverride || defaultPropmtPrefix}
+        systemMessage: `You are ${Config.assistantLabel} ${useCast?.api || opt.system.qwen || defaultPropmtPrefix}
         Current date: ${currentDate}`,
         completionParams,
         assistantLabel: Config.assistantLabel,
@@ -640,7 +643,7 @@ class Core {
         }
         option = Object.assign(option, conversation)
       }
-      if (Config.smartMode) {
+      if (opt.enableSmart) {
         let isAdmin = ['admin', 'owner'].includes(e.sender.role)
         let sender = e.sender.user_id
         const {
@@ -673,7 +676,7 @@ class Core {
           logger.info(msg)
           while (msg.functionCall) {
             if (msg.text) {
-              await this.reply(msg.text.replace('\n\n\n', '\n'))
+              await e.reply(msg.text.replace('\n\n\n', '\n'))
             }
             let {
               name,
@@ -748,7 +751,7 @@ class Core {
         let buffer = fs.readFileSync(outputLoc)
         option.image = buffer.toString('base64')
       }
-      if (Config.smartMode) {
+      if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
          */
@@ -801,7 +804,7 @@ class Core {
         }
         client.addTools(tools)
       }
-      let system = Config.geminiPrompt
+      let system = opt.system.gemini
       if (Config.enableGroupContext && e.isGroup) {
         let chats = await getChatHistoryGroup(e, Config.groupContextLength)
         const namePlaceholder = '[name]'
@@ -827,11 +830,11 @@ class Core {
         system += 'If I ask you to generate music or write songs, you need to reply with information suitable for Suno to generate music. Please use keywords such as Verse, Chorus, Bridge, Outro, and End to segment the lyrics, such as [Verse 1], The returned message is in JSON format, with a structure of ```json{"option": "Suno", "tags": "style", "title": "title of the song", "lyrics": "lyrics"}```.'
       }
       option.system = system
-      option.replyPureTextCallback = async (msg) => {
+      option.replyPureTextCallback = opt.settings.replyPureTextCallback || (async (msg) => {
         if (msg) {
           await e.reply(msg, true)
         }
-      }
+      })
       return await client.sendMessage(prompt, option)
     } else if (use === 'chatglm4') {
       const client = new ChatGLM4Client({
@@ -849,7 +852,7 @@ class Core {
         completionParams.model = Config.model
       }
       const currentDate = new Date().toISOString().split('T')[0]
-      let promptPrefix = `You are ${Config.assistantLabel} ${useCast?.api || Config.promptPrefixOverride || defaultPropmtPrefix}
+      let promptPrefix = `You are ${Config.assistantLabel} ${useCast?.api || opt.system.api || defaultPropmtPrefix}
         Current date: ${currentDate}`
       let maxModelTokens = getMaxModelTokens(completionParams.model)
       // let system = promptPrefix
@@ -900,7 +903,7 @@ class Core {
         }
         option = Object.assign(option, conversation)
       }
-      if (Config.smartMode) {
+      if (opt.enableSmart) {
         let isAdmin = ['admin', 'owner'].includes(e.sender.role)
         let sender = e.sender.user_id
         const {

@@ -1,7 +1,8 @@
+// @ts-ignore
 import Keyv from 'keyv'
 
 export type Role = 'user' | 'assistant' | 'system' | 'function'
-
+// @ts-ignore
 import fetch from 'node-fetch'
 export type FetchFn = typeof fetch
 
