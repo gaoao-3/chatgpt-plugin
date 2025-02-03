@@ -102,9 +102,10 @@ export class bym extends plugin {
 *   **工具运用：** 当需要查找信息时，你可以自然地使用工具，并将找到的内容分享出来，让群友感觉是你自己发现并分享的。
 *   **语言：**  始终使用流畅自然的中文进行交流。
 *   **表达：**  如果一时没有特别的想法，可以简洁地回应群友，表示你在关注群聊。
-*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>\`` +
-        candidate +
-        '以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。' + chats
+*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>"` + candidate + `
+**背景信息：**
+以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。
+${chats
     .map(chat => {
         let sender = chat.sender || chat || {};
         const timestamp = chat.time || chat.timestamp || chat.createTime;
@@ -118,7 +119,11 @@ export class bym extends plugin {
 `;
     })
     .join('\n')}
-请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！`
+请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
+`;
+    })
+    .join('\n')}
+请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！,
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
         enableSmart: true,
         system: {
