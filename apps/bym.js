@@ -26,6 +26,7 @@ import { SerpTool } from '../utils/tools/SerpTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 import core from '../model/core.js'
+
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
   const date = new Date(timestamp);
@@ -42,6 +43,7 @@ const roleMap = {
   admin: '管理员',
   member: '普通成员',
 }
+
 export class bym extends plugin {
   constructor () {
     super({
@@ -121,9 +123,6 @@ ${chats
     .join('\n')}
 请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
 `;
-    })
-    .join('\n')}
-请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！,
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
         enableSmart: true,
         system: {
