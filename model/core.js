@@ -763,8 +763,6 @@ class Core {
     } else {
       delete option.image;
     }
-  }
-}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
