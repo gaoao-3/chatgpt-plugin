@@ -747,13 +747,22 @@ class Core {
         search: Config.geminiEnableGoogleSearch,
         codeExecution: Config.geminiEnableCodeExecution
       }
-      const image = await getImg(e)
-      let imageUrl = image ? image[0] : undefined
+        const images = await getImg(e);
+if (Array.isArray(images) && images.length > 0) {
+  option.images = await Promise.all(
+    images.map(async (imageUrl) => {
       if (imageUrl) {
-        const response = await fetch(imageUrl)
-        const base64Image = Buffer.from(await response.arrayBuffer())
-        option.image = base64Image.toString('base64')
+        const response = await fetch(imageUrl);
+        const base64Image = Buffer.from(await response.arrayBuffer());
+        return base64Image.toString('base64');
       }
+      return null;
+    })
+  );
+  option.images = option.images.filter(img => img !== null);
+} else {
+  option.images = [];
+}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
