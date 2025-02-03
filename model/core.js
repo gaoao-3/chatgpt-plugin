@@ -727,36 +727,44 @@ class Core {
         return msg
       }
     } else if (use === 'gemini') {
-      let client = new CustomGoogleGeminiClient({
-        e,
-        userId: e.sender.user_id,
-        key: Config.getGeminiKey(),
-        model: Config.geminiModel,
-        baseUrl: Config.geminiBaseUrl,
-        debug: Config.debug
-      })
-      let option = {
-        stream: false,
-        onProgress: (data) => {
-          if (Config.debug) {
-            logger.info(data)
-          }
-        },
-        parentMessageId: conversation.parentMessageId,
-        conversationId: conversation.conversationId,
-        search: Config.geminiEnableGoogleSearch,
-        codeExecution: Config.geminiEnableCodeExecution
+  let client = new CustomGoogleGeminiClient({
+    e,
+    userId: e.sender.user_id,
+    key: Config.getGeminiKey(),
+    model: Config.geminiModel,
+    baseUrl: Config.geminiBaseUrl,
+    debug: Config.debug
+  });
+  let option = {
+    stream: false,
+    onProgress: (data) => {
+      if (Config.debug) {
+        logger.info(data);
       }
-      const image = await getImg(e)
-      let imageUrl = image ? image[0] : undefined
-      if (imageUrl) {
-        let md5 = imageUrl.split(/[/-]/).find(s => s.length === 32)?.toUpperCase()
-        let imageLoc = await getOrDownloadFile(`ocr/${md5}.png`, imageUrl)
-        let outputLoc = imageLoc.replace(`${md5}.png`, `${md5}_512.png`)
-        await resizeAndCropImage(imageLoc, outputLoc, 512)
-        let buffer = fs.readFileSync(outputLoc)
-        option.image = buffer.toString('base64')
-      }
+    },
+    parentMessageId: conversation.parentMessageId,
+    conversationId: conversation.conversationId,
+    search: Config.geminiEnableGoogleSearch,
+    codeExecution: Config.geminiEnableCodeExecution
+  };
+  let imgs = await getImg(e);
+  if (!e.msg) {
+    if (imgs && imgs.length > 0) {
+      e.msg = '[图片]';
+    } else {
+      return;
+    }
+  }
+  if (imgs && imgs.length > 0) {
+    const base64Images = await this.processImages(imgs);
+    if (base64Images.length > 0) {
+      option.image = base64Images;
+      e.msg = `[共${option.image.length}张图片] ${e.msg || ''}`.trim();
+    } else {
+      delete option.image;
+    }
+  }
+}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
