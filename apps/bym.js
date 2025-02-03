@@ -26,7 +26,6 @@ import { SerpTool } from '../utils/tools/SerpTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
 import core from '../model/core.js'
-
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
   const date = new Date(timestamp);
@@ -43,7 +42,6 @@ const roleMap = {
   admin: '管理员',
   member: '普通成员',
 }
-
 export class bym extends plugin {
   constructor () {
     super({
@@ -62,10 +60,13 @@ export class bym extends plugin {
       ]
     })
   }
-
   /** 复读 */
   async bym (e) {
-    if (!Config.enableBYM) {
+    // 【代码更新】: 增加 atBot 强制回复判断
+    if (e.atBot) { // 如果机器人被 @
+      logger.info('机器人被 @, 强制回复');
+      // 直接进入回复逻辑，忽略后续的配置检查
+    } else if (!Config.enableBYM) { // 否则，检查是否启用伪人模式
       return false
     }
     let sender = e.sender.user_id
@@ -81,7 +82,7 @@ export class bym extends plugin {
       fuck = true
       candidate = candidate + Config.bymFuckPrompt
     }
-    if (prop < Config.bymRate) {
+    if (prop < Config.bymRate || e.atBot) { // 【代码更新】:  在概率判断中加入 atBot 条件，确保被 @ 时也进入回复逻辑
       logger.info('random chat hit')
       let chats = await getChatHistoryGroup(e, 35)
       let system = `你的名字是"${Config.assistantLabel}"。
@@ -101,7 +102,7 @@ export class bym extends plugin {
 *   **工具运用：** 当需要查找信息时，你可以自然地使用工具，并将找到的内容分享出来，让群友感觉是你自己发现并分享的。
 *   **语言：**  始终使用流畅自然的中文进行交流。
 *   **表达：**  如果一时没有特别的想法，可以简洁地回应群友，表示你在关注群聊。
-*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>` +
+*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>\`` +
         candidate +
         '以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。' + chats
     .map(chat => {
@@ -118,7 +119,6 @@ export class bym extends plugin {
     })
     .join('\n')}
 请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！`
-
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
         enableSmart: true,
         system: {
