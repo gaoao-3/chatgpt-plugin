@@ -748,21 +748,14 @@ class Core {
         codeExecution: Config.geminiEnableCodeExecution
       }
         const images = await getImg(e);
-if (Array.isArray(images) && images.length > 0) {
-  option.images = await Promise.all(
-    images.map(async (imageUrl) => {
-      if (imageUrl) {
+   option.images = [];
+   for (const imageUrl of images) {
+     if (imageUrl) {
         const response = await fetch(imageUrl);
         const base64Image = Buffer.from(await response.arrayBuffer());
-        return base64Image.toString('base64');
-      }
-      return null;
-    })
-  );
-  option.images = option.images.filter(img => img !== null);
-} else {
-  option.images = [];
-}
+       option.images.push(base64Image.toString('base64'));
+     }
+   }
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
