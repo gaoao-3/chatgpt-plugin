@@ -215,9 +215,11 @@ const defaultConfig = {
   // 伪人额外设定
   bymPreset: '',
   bymMode: 'gemini',
+  // 思考过程转发
+  forwardReasoning: true,
   geminiEnableGoogleSearch: false,
   geminiEnableCodeExecution: false,
-  version: 'v2.8.2'
+  version: 'v2.8.3'
 }
 const _path = process.cwd()
 let config = {}

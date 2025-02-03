@@ -1044,9 +1044,14 @@ export class chatgpt extends plugin {
           }
         })
         if (thinking) {
-          let thinkingForward = await common.makeForwardMsg(e, [thinking], '思考过程')
-          this.reply(thinkingForward)
+          if (Config.forwardReasoning) {
+            let thinkingForward = await common.makeForwardMsg(e, [thinking], '思考过程')
+            this.reply(thinkingForward)
+          } else {
+            logger.mark('思考过程', thinking)
+          }
         }
+
         if (Config.enableSuggestedResponses && chatMessage.suggestedResponses) {
           this.reply(`建议的回复：\n${chatMessage.suggestedResponses}`)
         }

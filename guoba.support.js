@@ -152,6 +152,12 @@ export function supportGuoba () {
           component: 'Switch'
         },
         {
+          field: 'forwardReasoning',
+          label: '是否转发思考过程',
+          bottomHelpMessage: 'OpenAI的o系列、deepseek的r系列等思考模型的思考过程是否以转发形式发出。默认开启',
+          component: 'Switch'
+        },
+        {
           field: 'openAiBaseUrl',
           label: 'OpenAI API服务器地址',
           bottomHelpMessage: 'OpenAI的API服务器地址。注意要带上/v1。默认为https://api.openai.com/v1',
