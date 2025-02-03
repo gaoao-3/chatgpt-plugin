@@ -771,7 +771,6 @@ class Core {
     let buffer = fs.readFileSync(outputLoc);
     option.image = buffer.toString('base64');
   }
-｝ 
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
