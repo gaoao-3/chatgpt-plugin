@@ -750,48 +750,33 @@ class Core {
         const images = await getImg(e);
 option.images = [];
 if (images && Array.isArray(images)) {
-  console.log('getImg(e) 返回的图片 URLs:', images); // 打印 getImg(e) 返回的 URLs，方便检查
+  console.log('getImg(e) 返回的图片 URLs:', images);
   for (const imageUrl of images) {
     if (imageUrl) {
       try {
         const response = await fetch(imageUrl);
         if (!response.ok) {
           console.error(`Fetch 图片失败，URL: ${imageUrl}, 状态码: ${response.status}, 状态文本: ${response.statusText}`);
-          continue; // 跳过失败的图片
+          continue;
         }
         const arrayBuffer = await response.arrayBuffer();
         let base64Image = '';
-        // 判断是否是 Node.js 环境
         if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
-          // Node.js 环境
           base64Image = Buffer.from(arrayBuffer).toString('base64');
-          console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示 Node.js 环境
+          console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageUrl}`);
         } else {
-          // 浏览器环境
-          base64Image = await arrayBufferToBase64(arrayBuffer); // 使用新的 arrayBufferToBase64 函数
-          console.log(`[Browser] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示浏览器环境
+          console.warn("[警告] 当前环境不是 Node.js，但代码中使用了 Buffer。如果需要在浏览器环境中使用，请提供浏览器环境的 Base64 转换函数。");
+          continue;
         }
         option.images.push(base64Image);
       } catch (error) {
-        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error); // 保留原始的错误日志
-        console.error("详细错误信息:", error); // 增加详细错误日志，方便调试
+        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error);
+        console.error("详细错误信息:", error);
       }
     }
   }
 } else {
   console.warn("getImg(e) 没有返回有效的图片 URL 数组");
-}
-// 浏览器环境 ArrayBuffer 转 Base64 函数 (使用 FileReader API，更可靠)
-function arrayBufferToBase64(buffer) {
-  return new Promise((resolve, reject) => { // 返回 Promise，处理异步操作
-    const reader = new FileReader();
-    reader.onload = () => {
-      const base64String = reader.result.split(',')[1]; // 移除 Data URL 的前缀 "data:image/png;base64," 等
-      resolve(base64String); // resolve Promise，返回 Base64 字符串
-    };
-    reader.onerror = reject; // 处理 FileReader 错误
-    reader.readAsDataURL(new Blob([buffer])); // 将 ArrayBuffer 读取为 Data URL
-  });
 }
       if (opt.enableSmart) {
         /**
