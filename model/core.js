@@ -748,18 +748,15 @@ class Core {
         codeExecution: Config.geminiEnableCodeExecution
       }
         const images = await getImg(e);
-option.images = [];
-if (images && Array.isArray(images)) {
-  for (const imageUrl of images) {
-    if (imageUrl) {
-        const response = await fetch(imageUrl);
-        const base64Image = Buffer.from(await response.arrayBuffer());
-      option.images.push(base64Image.toString('base64'));
+    option.images = [];
+    console.log('getImg(e) 返回值:', images); // 步骤 1: 打印 getImg(e) 的返回值
+    if (images && Array.isArray(images)) {
+        console.log('进入图片处理循环，images:', images); // 步骤 2: 进入循环日志
+      // ... (图片处理循环的代码) ...
+    } else {
+        console.log('跳过图片处理循环，images:', images); // 步骤 2: 跳过循环日志
+        console.warn("getImg(e) 没有返回有效的图片 URL 数组");
     }
-  }
-} else {
-  console.warn("getImg(e) 没有返回有效的图片 URL 数组");
-}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
