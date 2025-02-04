@@ -30,6 +30,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
     this.baseUrl = props.baseUrl || BASEURL
     this.supportFunction = true
     this.debug = props.debug
+    this.tools = props.tools || []
   }
 
   async sendMessage (text, opt = {}) {
@@ -37,6 +38,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
     let systemMessage = opt.system
     const idThis = crypto.randomUUID()
     const idModel = crypto.randomUUID()
+
     const thisMessage = opt.functionResponse
       ? {
           role: 'user',
@@ -54,33 +56,24 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         }
 
     if (opt.image) {
-      if (Array.isArray(opt.image)) {
-        opt.image.forEach(img => {
-          thisMessage.parts.push({
-            inline_data: {
-              mime_type: 'image/jpeg',
-              data: img
-            }
-          })
-        })
-      } else {
+      const imagesArray = Array.isArray(opt.image) ? opt.image : [opt.image]
+      imagesArray.forEach(img => {
         thisMessage.parts.push({
           inline_data: {
             mime_type: 'image/jpeg',
-            data: opt.image
+            data: img
           }
         })
-      }
+      })
     }
 
     history.push(_.cloneDeep(thisMessage))
+
     let url = `${this.baseUrl}/v1beta/models/${this.model}:generateContent`
     let body = {
       contents: history,
       system_instruction: {
-        parts: {
-          text: systemMessage
-        }
+        parts: systemMessage ? [{ text: systemMessage }] : []
       },
       safetySettings: [
         {
@@ -108,12 +101,12 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         maxOutputTokens: opt.maxOutputTokens || 1000,
         temperature: opt.temperature || 0.9,
         topP: opt.topP || 0.95,
-        topK: opt.tokK || 16
+        topK: opt.topK || 16
       },
       tools: []
     }
 
-    if (this.tools?.length > 0) {
+    if (this.tools.length > 0) {
       body.tools.push({
         function_declarations: this.tools.map(tool => tool.function())
       })
@@ -138,9 +131,10 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
       body.tools.push({ code_execution: {} })
     }
 
-    if (opt.image && ((Array.isArray(opt.image) && opt.image.length > 0) || !Array.isArray(opt.image))) {
-      delete body.tools
-    }
+    // 图片存在时 *保留* tools (删除之前的删除 tools 代码)
+    // if (opt.image && imagesArray.length > 0) {
+    //   delete body.tools;
+    // }
 
     body.contents.forEach(content => {
       delete content.id
@@ -155,9 +149,11 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         'x-goog-api-key': this._key
       }
     })
+
     if (result.status !== 200) {
       throw new Error(await result.text())
     }
+
     let responseContent
     let response = await result.json()
     if (this.debug) {
@@ -213,7 +209,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         responseOpt.parentMessageId = idModel
         responseOpt.functionResponse = functionResponse
         await this.upsertMessage(thisMessage)
-        responseContent = handleSearchResponse(responseContent).responseContent
+        responseContent = formatResponseContent(responseContent).responseContent
         const respMessage = Object.assign(responseContent, {
           id: idModel,
           parentMessageId: idThis
@@ -240,7 +236,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
       await this.upsertMessage(respMessage)
     }
 
-    let { final } = handleSearchResponse(responseContent)
+    let { final } = formatResponseContent(responseContent)
     try {
       if (groundingMetadata?.groundingChunks) {
         final += '\n参考资料\n'
@@ -264,9 +260,9 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
   }
 }
 
-function handleSearchResponse (responseContent) {
+function formatResponseContent (responseContent) {
   let final = ''
-  responseContent.parts = responseContent.parts.map((part) => {
+  const updatedParts = responseContent.parts.map((part) => {
     let newText = ''
     if (part.text) {
       newText += part.text
@@ -292,6 +288,6 @@ function handleSearchResponse (responseContent) {
   })
   return {
     final,
-    responseContent
+    responseContent: { ...responseContent, parts: updatedParts }
   }
 }
