@@ -747,37 +747,13 @@ class Core {
         search: Config.geminiEnableGoogleSearch,
         codeExecution: Config.geminiEnableCodeExecution
       }
-        const images = await getImg(e);
-option.images = [];
-if (images && Array.isArray(images)) {
-  console.log('getImg(e) 返回的图片 URLs:', images);
-  for (const imageUrl of images) {
-    if (imageUrl) {
-      try {
-        const response = await fetch(imageUrl);
-        if (!response.ok) {
-          console.error(`Fetch 图片失败，URL: ${imageUrl}, 状态码: ${response.status}, 状态文本: ${response.statusText}`);
-          continue;
-        }
-        const arrayBuffer = await response.arrayBuffer();
-        let base64Image = '';
-        if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
-          base64Image = Buffer.from(arrayBuffer).toString('base64');
-          console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageUrl}`);
-        } else {
-          console.warn("[警告] 当前环境不是 Node.js，但代码中使用了 Buffer。如果需要在浏览器环境中使用，请提供浏览器环境的 Base64 转换函数。");
-          continue;
-        }
-        option.images.push(base64Image);
-      } catch (error) {
-        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error);
-        console.error("详细错误信息:", error);
+      const image = await getImg(e)
+      let imageUrl = image ? image[0] : undefined
+      if (imageUrl) {
+        const response = await fetch(imageUrl)
+        const base64Image = Buffer.from(await response.arrayBuffer())
+        option.image = base64Image.toString('base64')
       }
-    }
-  }
-} else {
-  console.warn("getImg(e) 没有返回有效的图片 URL 数组");
-}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
