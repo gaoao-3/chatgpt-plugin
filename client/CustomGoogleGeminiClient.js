@@ -200,7 +200,7 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         maxOutputTokens: opt.maxOutputTokens || 1000,
         temperature: opt.temperature || 0.9,
         topP: opt.topP || 0.95,
-        topK: opt.tokK || 16
+        topK: opt.topK || 16
       },
       tools: []
     }
