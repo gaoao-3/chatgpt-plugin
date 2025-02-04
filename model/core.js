@@ -748,15 +748,48 @@ class Core {
         codeExecution: Config.geminiEnableCodeExecution
       }
         const images = await getImg(e);
-    option.images = [];
-    console.log('getImg(e) 返回值:', images); // 步骤 1: 打印 getImg(e) 的返回值
-    if (images && Array.isArray(images)) {
-        console.log('进入图片处理循环，images:', images); // 步骤 2: 进入循环日志
-      // ... (图片处理循环的代码) ...
-    } else {
-        console.log('跳过图片处理循环，images:', images); // 步骤 2: 跳过循环日志
-        console.warn("getImg(e) 没有返回有效的图片 URL 数组");
+option.images = [];
+if (images && Array.isArray(images)) {
+  console.log('getImg(e) 返回的图片 URLs:', images);
+  for (const imageUrl of images) {
+    if (imageUrl) {
+      try {
+        const response = await fetch(imageUrl);
+        if (!response.ok) {
+          console.error(`Fetch 图片失败，URL: ${imageUrl}, 状态码: ${response.status}, 状态文本: ${response.statusText}`);
+          continue; // 跳过失败的图片
+        }
+        const arrayBuffer = await response.arrayBuffer();
+        let base64Image = '';
+        // 判断是否是 Node.js 环境
+        if (typeof Buffer !== 'undefined' && typeof Buffer.from === 'function') {
+          // Node.js 环境
+          base64Image = Buffer.from(arrayBuffer).toString('base64');
+          console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示 Node.js 环境
+        } else {
+          // 浏览器环境
+          base64Image = arrayBufferToBase64(arrayBuffer);
+          console.log(`[Browser] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示浏览器环境
+        }
+        option.images.push(base64Image);
+      } catch (error) {
+        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error);
+      }
     }
+  }
+} else {
+  console.warn("getImg(e) 没有返回有效的图片 URL 数组");
+}
+// 浏览器环境 ArrayBuffer 转 Base64 函数 (如果你的代码需要兼容浏览器)
+function arrayBufferToBase64(buffer) {
+  let binary = '';
+  const bytes = new Uint8Array(buffer);
+  const len = bytes.byteLength;
+  for (let i = 0; i < len; i++) {
+    binary += String.fromCharCode(bytes[i]);
+  }
+  return btoa(binary);
+}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
