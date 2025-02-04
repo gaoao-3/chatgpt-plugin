@@ -750,7 +750,7 @@ class Core {
         const images = await getImg(e);
 option.images = [];
 if (images && Array.isArray(images)) {
-  console.log('getImg(e) 返回的图片 URLs:', images);
+  console.log('getImg(e) 返回的图片 URLs:', images); // 打印 getImg(e) 返回的 URLs，方便检查
   for (const imageUrl of images) {
     if (imageUrl) {
       try {
@@ -768,27 +768,30 @@ if (images && Array.isArray(images)) {
           console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示 Node.js 环境
         } else {
           // 浏览器环境
-          base64Image = arrayBufferToBase64(arrayBuffer);
+          base64Image = await arrayBufferToBase64(arrayBuffer); // 使用新的 arrayBufferToBase64 函数
           console.log(`[Browser] 成功转换图片为 Base64, URL: ${imageUrl}`); // 明确提示浏览器环境
         }
         option.images.push(base64Image);
       } catch (error) {
-        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error);
+        console.error(`处理图片 URL: ${imageUrl} 时发生错误:`, error); // 保留原始的错误日志
+        console.error("详细错误信息:", error); // 增加详细错误日志，方便调试
       }
     }
   }
 } else {
   console.warn("getImg(e) 没有返回有效的图片 URL 数组");
 }
-// 浏览器环境 ArrayBuffer 转 Base64 函数 (如果你的代码需要兼容浏览器)
+// 浏览器环境 ArrayBuffer 转 Base64 函数 (使用 FileReader API，更可靠)
 function arrayBufferToBase64(buffer) {
-  let binary = '';
-  const bytes = new Uint8Array(buffer);
-  const len = bytes.byteLength;
-  for (let i = 0; i < len; i++) {
-    binary += String.fromCharCode(bytes[i]);
-  }
-  return btoa(binary);
+  return new Promise((resolve, reject) => { // 返回 Promise，处理异步操作
+    const reader = new FileReader();
+    reader.onload = () => {
+      const base64String = reader.result.split(',')[1]; // 移除 Data URL 的前缀 "data:image/png;base64," 等
+      resolve(base64String); // resolve Promise，返回 Base64 字符串
+    };
+    reader.onerror = reject; // 处理 FileReader 错误
+    reader.readAsDataURL(new Blob([buffer])); // 将 ArrayBuffer 读取为 Data URL
+  });
 }
       if (opt.enableSmart) {
         /**
