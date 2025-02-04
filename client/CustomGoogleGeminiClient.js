@@ -56,18 +56,40 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
         }
 
     if (opt.image) {
-      const imagesArray = Array.isArray(opt.image) ? opt.image : [opt.image]
-      imagesArray.forEach(img => {
+      const imagesInput = Array.isArray(opt.image) ? opt.image : [opt.image];
+      const base64Images = [];
+
+      for (const imageInput of imagesInput) {
+        if (typeof imageInput === 'string' && imageInput.startsWith('http')) {
+          try {
+            const response = await newFetch(imageInput);
+            if (!response.ok) {
+              console.error(`Fetch 图片失败，URL: ${imageInput}, 状态码: ${response.status}, 状态文本: ${response.statusText}`);
+              continue;
+            }
+            const arrayBuffer = await response.arrayBuffer();
+            const base64Image = Buffer.from(arrayBuffer).toString('base64');
+            base64Images.push(base64Image);
+            console.log(`[Node.js] 成功转换图片为 Base64, URL: ${imageInput}`);
+          } catch (error) {
+            console.error(`处理图片 URL: ${imageInput} 时发生错误:`, error);
+          }
+        } else if (typeof imageInput === 'string') {
+          base64Images.push(imageInput);
+        } else {
+          console.warn("无效的 image 输入类型，应为图片 URL 或 Base64 字符串:", imageInput);
+        }
+      }
+
+      base64Images.forEach(base64Image => {
         thisMessage.parts.push({
           inline_data: {
             mime_type: 'image/jpeg',
-            data: img
+            data: base64Image
           }
         })
       })
     }
-
-    history.push(_.cloneDeep(thisMessage))
 
     let url = `${this.baseUrl}/v1beta/models/${this.model}:generateContent`
     let body = {
@@ -130,11 +152,6 @@ export class CustomGoogleGeminiClient extends GoogleGeminiClient {
     if (opt.codeExecution) {
       body.tools.push({ code_execution: {} })
     }
-
-    // 图片存在时 *保留* tools (删除之前的删除 tools 代码)
-    // if (opt.image && imagesArray.length > 0) {
-    //   delete body.tools;
-    // }
 
     body.contents.forEach(content => {
       delete content.id
