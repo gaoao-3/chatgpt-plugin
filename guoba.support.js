@@ -190,28 +190,9 @@ export function supportGuoba () {
           component: 'Divider'
         },
         {
-          field: 'toneStyle',
-          label: 'Bing模式',
-          bottomHelpMessage: 'Copilot的应答风格。默认为创意，可切换为精准或均衡，均为GPT-turbo',
-          component: 'Select',
-          componentProps: {
-            options: [
-              { label: '创意', value: 'Creative' },
-              { label: '均衡', value: 'Balanced' },
-              { label: '精准', value: 'Precise' }
-            ]
-          }
-        },
-        {
-          field: 'sydneyEnableSearch',
-          label: '是否允许必应进行搜索',
-          bottomHelpMessage: '关闭后必应将禁用搜索',
-          component: 'Switch'
-        },
-        {
-          field: 'enableSuggestedResponses',
-          label: '是否开启建议回复',
-          bottomHelpMessage: '开启了会像官网上一样，每个问题给出建议的用户问题',
+          field: 'bingReasoning',
+          label: 'Bing开启思考',
+          bottomHelpMessage: 'Copilot的思考功能。开启后无法搜索',
           component: 'Switch'
         },
         {
@@ -229,12 +210,6 @@ export function supportGuoba () {
           field: 'enforceMaster',
           label: '加强主人认知',
           bottomHelpMessage: '加强主人认知。希望机器人认清主人，避免NTR可开启。开启后可能会与自设定的内容有部分冲突。sydney模式可以放心开启',
-          component: 'Switch'
-        },
-        {
-          field: 'enableGenerateContents',
-          label: '允许生成图像等内容',
-          bottomHelpMessage: '开启后类似网页版能够发图。但是此选项会占用大量token，自设定等模式下容易爆token',
           component: 'Switch'
         },
         {
@@ -256,88 +231,46 @@ export function supportGuoba () {
           component: 'InputTextArea'
         },
         {
-          field: 'sydneyApologyIgnored',
-          label: 'Bing抱歉是否不计入聊天记录',
-          bottomHelpMessage: '有时无限抱歉，就关掉这个再多问几次试试，可能有奇效',
-          component: 'Switch'
-        },
-        {
-          field: 'sydneyContext',
-          label: 'Bing的扩展资料',
-          bottomHelpMessage: 'AI将会从你提供的扩展资料中学习到一些知识，帮助它更好地回答你的问题。实际相当于使用edge侧边栏Bing时读取的你当前浏览网页的内容。如果太长可能容易到达GPT-4的8192token上限',
-          component: 'InputTextArea'
-        },
-        {
           field: 'sydneyReverseProxy',
           label: '必应反代',
           bottomHelpMessage: '用于创建对话（默认不用于正式对话）。目前国内ip和部分境外IDC IP由于微软限制创建对话，如果有bing.com的反代可以填在此处，或者使用proxy',
           component: 'Input'
         },
         {
-          field: 'sydneyForceUseReverse',
-          label: '强制使用sydney反代',
-          bottomHelpMessage: '即使配置了proxy，创建对话时依然使用必应反代',
-          component: 'Switch'
-        },
-        {
-          field: 'sydneyWebsocketUseProxy',
-          label: '对话使用必应反代',
-          bottomHelpMessage: '默认情况下仅创建对话走反代，对话时仍然直连微软。开启本选项将使对话过程也走反代，需反代支持。默认开启',
-          component: 'Switch'
-        },
-        {
-          field: 'bingCaptchaOneShotUrl',
-          label: '必应验证码pass服务',
-          bottomHelpMessage: '必应出验证码会自动用该服务绕过',
+          field: 'bingAiToken',
+          label: '必应AccessToken',
+          bottomHelpMessage: 'Copilot的AccessToken，scope需为ChatAI.ReadWrite。可以发送`#Copilot配置方法`查看浏览器获取配置的方法。',
           component: 'Input'
         },
         {
-          field: 'sydneyMood',
-          label: '情感显示',
-          bottomHelpMessage: '开启Sydney的情感显示，仅在图片模式下生效',
-          component: 'Switch'
+          field: 'bingAiClientId',
+          label: '必应ClientId',
+          bottomHelpMessage: '配合RefreshToken刷新AccessToken',
+          component: 'Input'
         },
         {
-          field: 'sydneyImageRecognition',
-          label: '图片识别',
-          bottomHelpMessage: '开启Sydney的图片识别功能，建议和OCR只保留一个开启',
-          component: 'Switch'
+          field: 'bingAiScope',
+          label: '必应Auth Scope',
+          bottomHelpMessage: '配合RefreshToken刷新AccessToken',
+          component: 'Input'
         },
         {
-          field: 'chatExampleUser1',
-          label: '前置对话第一轮（用户）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
+          field: 'bingAiRefreshToken',
+          label: '必应RefreshToken',
+          bottomHelpMessage: '配合RefreshToken刷新AccessToken',
+          component: 'Input'
         },
         {
-          field: 'chatExampleBot1',
-          label: '前置对话第一轮（AI）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
+          field: 'bingAiOid',
+          label: '必应Oid',
+          bottomHelpMessage: '（homeAccountId）配合RefreshToken刷新AccessToken',
+          component: 'Input'
         },
         {
-          field: 'chatExampleUser2',
-          label: '前置对话第二轮（用户）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
-        },
-        {
-          field: 'chatExampleBot2',
-          label: '前置对话第二轮（AI）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
-        },
-        {
-          field: 'chatExampleUser3',
-          label: '前置对话第三轮（用户）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
-        },
-        {
-          field: 'chatExampleBot3',
-          label: '前置对话第三轮（AI）',
-          bottomHelpMessage: '会强行插入该轮对话，能有效抑制抱歉',
-          component: 'InputTextArea'
+          field: '_2captchaKey',
+          label: '2captcha API密钥',
+          bottomHelpMessage: '用于解除Copilot的验证码',
+          component: 'Input'
         },
         {
           label: '以下为API3方式的配置',
