@@ -748,14 +748,18 @@ class Core {
         codeExecution: Config.geminiEnableCodeExecution
       }
         const images = await getImg(e);
-   option.images = [];
-   for (const imageUrl of images) {
-     if (imageUrl) {
+option.images = [];
+if (images && Array.isArray(images)) {
+  for (const imageUrl of images) {
+    if (imageUrl) {
         const response = await fetch(imageUrl);
         const base64Image = Buffer.from(await response.arrayBuffer());
-       option.images.push(base64Image.toString('base64'));
-     }
-   }
+      option.images.push(base64Image.toString('base64'));
+    }
+  }
+} else {
+  console.warn("getImg(e) 没有返回有效的图片 URL 数组");
+}
       if (opt.enableSmart) {
         /**
          * @type {AbstractTool[]}
