@@ -74,7 +74,7 @@ export class GoogleSearchTool extends AbstractTool {
   async searchWithGemini(query, length) {
     const apiKey = Config.getGeminiKey();
     const apiBaseUrl = Config.geminiBaseUrl;
-    const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-flash-exp:generateContent?key=${apiKey}`;
+    const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${apiKey}`;
 
     if (!apiKey || !apiBaseUrl) {
       throw new Error('Gemini API 配置缺失');
