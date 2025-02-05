@@ -2,6 +2,7 @@ import WebSocket from 'ws'
 import common from '../../../lib/common/common.js'
 import _ from 'lodash'
 import { pTimeout } from '../utils/common.js'
+import {Config} from '../utils/config.js'
 
 export class BingAIClient {
   constructor (accessToken, baseUrl = 'wss://copilot.microsoft.com', debug, _2captchaKey, clientId, scope, refreshToken, oid, reasoning = false) {
@@ -75,12 +76,12 @@ export class BingAIClient {
           logger.info('received message', String(message))
         })
       }
-      this.ws.on('close', (code, reason) => {
+      this.ws.on('close', async (code, reason) => {
         console.log('WebSocket connection closed. Code:', code, 'Reason:', reason)
 
         if (code === 401) {
           logger.error('token expired. try to refresh with refresh token')
-          this.doRefreshToken(this.clientId, this.scope, this.refreshToken, this.oid)
+          await this.doRefreshToken(this.clientId, this.scope, this.refreshToken, this.oid)
         }
       })
 
@@ -265,7 +266,10 @@ export class BingAIClient {
     return token
   }
 
-  async _generateConversationId () {
+  async _generateConversationId (times = 3) {
+    if (times < 0) {
+      throw new Error('max retry exceed, maybe refresh token error')
+    }
     const url = `${this.baseUrl}/c/api/conversations`
     const createConversationRsp = await fetch(url, {
       headers: {
@@ -277,6 +281,10 @@ export class BingAIClient {
       },
       method: 'POST'
     })
+    if (createConversationRsp.status === 401) {
+      await this.doRefreshToken(this.clientId, this.scope, this.refreshToken, this.oid)
+      return await this._generateConversationId(times - 1)
+    }
     const conversation = await createConversationRsp.json()
     return conversation.id
   }
@@ -351,7 +359,8 @@ export class BingAIClient {
     if (this.debug) {
       logger.info(JSON.stringify(tokenJson))
     }
-
+    this.accessToken = tokenJson.access_token
+    Config.bingAiToken = this.accessToken
     return tokenJson
   }
 }
