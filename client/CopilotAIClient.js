@@ -361,6 +361,11 @@ export class BingAIClient {
     }
     this.accessToken = tokenJson.access_token
     Config.bingAiToken = this.accessToken
+    if (tokenJson.refresh_token) {
+      this.refreshToken = tokenJson.refresh_token
+      Config.bingAiRefreshToken = this.refreshToken
+    }
+
     return tokenJson
   }
 }
