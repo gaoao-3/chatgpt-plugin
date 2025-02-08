@@ -103,7 +103,7 @@ export class CodeExecutionTool extends AbstractTool {
     // 获取API配置信息
     const apiKey = Config.getGeminiKey();
     const apiBaseUrl = Config.geminiBaseUrl;
-    const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-pro-exp-02-05:generateContent?key=${apiKey}`;
+    const apiUrl = `${apiBaseUrl}/v1beta/models/gemini-2.0-flash-001:generateContent?key=${apiKey}`;
 
     // API配置验证
     if (!apiKey || !apiBaseUrl) {
