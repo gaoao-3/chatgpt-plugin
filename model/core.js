@@ -29,7 +29,6 @@ import { SendAvatarTool } from '../utils/tools/SendAvatarTool.js'
 import { SerpImageTool } from '../utils/tools/SearchImageTool.js'
 import { SearchMusicTool } from '../utils/tools/SearchMusicTool.js'
 import { SendMusicTool } from '../utils/tools/SendMusicTool.js'
-import { SendAudioMessageTool } from '../utils/tools/SendAudioMessageTool.js'
 import { SendMessageToSpecificGroupOrUserTool } from '../utils/tools/SendMessageToSpecificGroupOrUserTool.js'
 import { QueryGenshinTool } from '../utils/tools/QueryGenshinTool.js'
 import { WeatherTool } from '../utils/tools/WeatherTool.js'
@@ -552,7 +551,6 @@ class Core {
           new GLMSearchTool(),
           new UrlExtractionTool(),
           new CodeExecutionTool(),
-          new SendAudioMessageTool(),
           new APTool(),
           new SendMessageToSpecificGroupOrUserTool(),
           new QueryGenshinTool()
@@ -822,7 +820,6 @@ async function collectTools (e) {
     new UrlExtractionTool(),
     new CodeExecutionTool(),
     new SerpTool(),
-    new SendAudioMessageTool(),
     new ProcessPictureTool(),
     new APTool(),
     new HandleMessageMsgTool(),
@@ -848,8 +845,13 @@ async function collectTools (e) {
     // new KickOutTool(),
     new WeatherTool(),
     new SendPictureTool(),
-    new SendAudioMessageTool(),
     new APTool(),
+    new DrawTool(),
+    new GoogleSearchTool(),
+    new HinaVoiceTool(),
+    new GLMSearchTool(),
+    new UrlExtractionTool(),
+    new CodeExecutionTool(),
     // new HandleMessageMsgTool(),
     serpTool,
     new QueryUserinfoTool()
