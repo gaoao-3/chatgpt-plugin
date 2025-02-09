@@ -14,62 +14,70 @@ export class WebsiteTool extends AbstractTool {
     properties: {
       url: {
         type: 'string',
-        description: '要访问的网站网址'
+        description: 'The URL of the website to visit'
       }
     },
     required: ['url']
   }
 
   func = async function (opts) {
-    let { url, mode, e } = opts
+    const { url, mode, e } = opts
     let browser
 
     try {
+      // Fetch and clean the HTML content of the webpage
       let text = await this.fetchPageContent(url)
       text = this.cleanHtmlContent(text)
 
+      // Depending on the mode, process with either Gemini or GPT
       if (mode === 'gemini') {
-        return this.processWithGemini(text, e)
+        return await this.processWithGemini(text, e)
       } else {
-        return this.processWithGPT(text)
+        return await this.processWithGPT(text)
       }
     } catch (err) {
-      return `访问网站失败，错误：${err.toString()}`
+      // Error handling with detailed message
+      return `Failed to access the website, error: ${err.toString()}`
     } finally {
+      // Ensure browser is closed
       if (browser) {
         try {
           await browser.close()
         } catch (err) {
-          // 忽略关闭时的错误
+          // Ignore any error during browser close
         }
       }
     }
   }
 
-  // 获取页面内容
+  // Fetch webpage content with Puppeteer
   fetchPageContent = async (url) => {
     let browser
     let origin = false
+
     if (!Config.headless) {
       Config.headless = true
       origin = true
     }
 
-    let ppt = new ChatGPTPuppeteer()
+    // Reuse Puppeteer browser instance
+    const ppt = new ChatGPTPuppeteer()
     browser = await ppt.getBrowser()
-    let page = await browser.newPage()
-    await page.goto(url, { waitUntil: 'networkidle2' })
-    let text = await page.content()
-    await page.close()
 
-    if (origin) {
-      Config.headless = false
+    try {
+      const page = await browser.newPage()
+      await page.goto(url, { waitUntil: 'networkidle2' })
+      let text = await page.content()
+      await page.close()
+
+      return text
+    } catch (err) {
+      logger.error(`Error fetching content from ${url}: ${err.message}`)
+      return ''
     }
-
-    return text
   }
 
-  // 清理HTML内容，去除不需要的标签和元素
+  // Clean up the HTML content by removing unnecessary tags and elements
   cleanHtmlContent = (text) => {
     return text.replace(/<style\b[^<]*(?:(?!<\/style>)<[^<]*)*<\/style>/gi, '')
       .replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '')
@@ -79,18 +87,18 @@ export class WebsiteTool extends AbstractTool {
       .replace(/<video\b[^<]*(?:(?!<\/video>)<[^<]*)*<\/video>/gi, '')
       .replace(/<audio\b[^<]*(?:(?!<\/audio>)<[^<]*)*<\/audio>/gi, '')
       .replace(/<img[^>]*>/gi, '')
-      .replace(/<!--[\s\S]*?-->/gi, '')  // 去除注释
-      .replace(/<(?!\/?(title|ul|li|td|tr|thead|tbody|blockquote|h[1-6]|H[1-6])[^>]*)\w+\s+[^>]*>/gi, '') // 去除不常用标签
-      .replace(/<(\w+)(\s[^>]*)?>/gi, '<$1>') // 去除标签属性
-      .replace(/<\/(?!\/?(title|ul|li|td|tr|thead|tbody|blockquote|h[1-6]|H[1-6])[^>]*)[a-z][a-z0-9]*>/gi, '') // 去除不常用结束标签
-      .replace(/[\n\r]/gi, '')  // 去除回车换行
-      .replace(/\s{2}/g, ' ')  // 多个空格只保留一个空格
-      .replace('<!DOCTYPE html>', '')  // 去除<!DOCTYPE>声明
+      .replace(/<!--[\s\S]*?-->/gi, '')  // Remove comments
+      .replace(/<(?!\/?(title|ul|li|td|tr|thead|tbody|blockquote|h[1-6]|H[1-6])[^>]*)\w+\s+[^>]*>/gi, '') // Remove uncommon tags
+      .replace(/<(\w+)(\s[^>]*)?>/gi, '<$1>') // Remove tag attributes
+      .replace(/<\/(?!\/?(title|ul|li|td|tr|thead|tbody|blockquote|h[1-6]|H[1-6])[^>]*)[a-z][a-z0-9]*>/gi, '') // Remove uncommon closing tags
+      .replace(/[\n\r]/gi, '')  // Remove line breaks
+      .replace(/\s{2}/g, ' ')  // Keep only a single space for multiple spaces
+      .replace('<!DOCTYPE html>', '')  // Remove <!DOCTYPE> declaration
   }
 
-  // 使用 Gemini 处理网页内容
+  // Process webpage content using Gemini
   processWithGemini = async (text, e) => {
-    let client = new CustomGoogleGeminiClient({
+    const client = new CustomGoogleGeminiClient({
       e,
       userId: e?.sender?.user_id,
       key: Config.getGeminiKey(),
@@ -99,14 +107,19 @@ export class WebsiteTool extends AbstractTool {
       debug: Config.debug
     })
 
-    const response = await client.sendMessage(`去除与主体内容无关的部分，从中整理出主体内容并转换成md格式，不需要主观描述性的语言与冗余的空白行。${text}`)
-    let htmlContentSummary = response.text
-    return `网站主体内容如下：\n ${htmlContentSummary}`
+    try {
+      const response = await client.sendMessage(`Remove irrelevant content, extract the main content, and convert it to MD format. Avoid subjective language and redundant blank lines. ${text}`)
+      const htmlContentSummary = response.text
+      return `Main content of the website:\n${htmlContentSummary}`
+    } catch (err) {
+      logger.error(`Error processing content with Gemini: ${err.message}`)
+      return `Error processing content with Gemini: ${err.message}`
+    }
   }
 
-  // 使用 GPT 处理网页内容
+  // Process webpage content using GPT-3
   processWithGPT = async (text) => {
-    let maxModelTokens = getMaxModelTokens(Config.model)
+    const maxModelTokens = getMaxModelTokens(Config.model)
     text = text.slice(0, Math.min(text.length, maxModelTokens - 1600))
 
     const completionParams = { model: 'gpt-3.5-turbo-16k' }
@@ -119,12 +132,17 @@ export class WebsiteTool extends AbstractTool {
       maxModelTokens
     })
 
-    const response = await api.sendMessage(`去除与主体内容无关的部分，从中整理出主体内容并转换成md格式，不需要主观描述性的语言与冗余的空白行。${text}`, { completionParams })
-    let htmlContentSummary = response.text
-    return `网站主体内容如下：\n ${htmlContentSummary}`
+    try {
+      const response = await api.sendMessage(`Remove irrelevant content, extract the main content, and convert it to MD format. Avoid subjective language and redundant blank lines. ${text}`, { completionParams })
+      const htmlContentSummary = response.text
+      return `Main content of the website:\n${htmlContentSummary}`
+    } catch (err) {
+      logger.error(`Error processing content with GPT: ${err.message}`)
+      return `Error processing content with GPT: ${err.message}`
+    }
   }
 
-  // 创建 fetch 函数，支持代理
+  // Create a fetch function that supports proxy if configured
   createFetchFunction = () => {
     return (url, options = {}) => {
       const defaultOptions = Config.proxy
@@ -136,5 +154,5 @@ export class WebsiteTool extends AbstractTool {
     }
   }
 
-  description = '当你需要通过 URL 访问网站时非常有用'
+  description = 'Useful when you need to access a website via URL'
 }
