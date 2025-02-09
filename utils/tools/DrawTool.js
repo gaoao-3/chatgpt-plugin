@@ -111,7 +111,7 @@ export class DrawTool extends AbstractTool {
   async generatePromptWithGemini(query) {
     const apiKey = Config.getGeminiKey();
     const apiBaseUrl = Config.geminiBaseUrl;
-    const modelName = 'gemini-2.0-flash-exp';
+    const modelName = 'gemini-2.0-pro-exp';
     const apiUrl = `${apiBaseUrl}/v1beta/models/${modelName}:generateContent?key=${apiKey}`;
 
     if (!apiKey || !apiBaseUrl) {
