@@ -38,12 +38,11 @@ import { JinyanTool } from '../utils/tools/JinyanTool.js'
 import { KickOutTool } from '../utils/tools/KickOutTool.js'
 import { SetTitleTool } from '../utils/tools/SetTitleTool.js'
 import { SerpIkechan8370Tool } from '../utils/tools/SerpIkechan8370Tool.js'
-//import { SerpTool } from '../utils/tools/SerpTool.js'
+import { SerpTool } from '../utils/tools/SerpTool.js'
 import common from '../../../lib/common/common.js'
 import { SendDiceTool } from '../utils/tools/SendDiceTool.js'
 import { EliMovieTool } from '../utils/tools/EliMovieTool.js'
 import { GoogleSearchTool } from '../utils/tools/GoogleSearchTool.js'
-import { UrlExtractionTool } from '../utils/tools/UrlExtractionTool.js'
 import { CodeExecutionTool } from '../utils/tools/CodeExecutionTool.js'
 import { GLMSearchTool } from '../utils/tools/GLMSearchTool.js'
 import { DrawTool } from '../utils/tools/DrawTool.js'
@@ -549,7 +548,6 @@ class Core {
           new DrawTool(),
           new HinaVoiceTool(),
           new GLMSearchTool(),
-          new UrlExtractionTool(),
           new CodeExecutionTool(),
           new APTool(),
           new SendMessageToSpecificGroupOrUserTool(),
@@ -817,7 +815,6 @@ async function collectTools (e) {
     new DrawTool(),
     new HinaVoiceTool(),
     new GLMSearchTool(),
-    new UrlExtractionTool(),
     new CodeExecutionTool(),
     new SerpTool(),
     new ProcessPictureTool(),
@@ -850,7 +847,6 @@ async function collectTools (e) {
     new GoogleSearchTool(),
     new HinaVoiceTool(),
     new GLMSearchTool(),
-    new UrlExtractionTool(),
     new CodeExecutionTool(),
     // new HandleMessageMsgTool(),
     serpTool,
