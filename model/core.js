@@ -654,7 +654,8 @@ class Core {
         completionParams,
         assistantLabel: Config.assistantLabel,
         fetch: newFetch,
-        maxModelTokens
+        maxModelTokens,
+        maxResponseTokens: Config.apiMaxToken
       }
       let openAIAccessible = (Config.proxy || !(await isCN())) // 配了代理或者服务器在国外，默认认为不需要反代
       if (opts.apiBaseUrl !== defaultOpenAIAPI && openAIAccessible && !Config.openAiForceUseReverse) {
