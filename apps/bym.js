@@ -24,7 +24,6 @@ const roleMap = {
 }
 
 export class bym extends plugin {
-class bym extends plugin {
   constructor () {
     super({
       name: 'ChatGPT-Plugin 伪人bym',
