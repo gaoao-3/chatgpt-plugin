@@ -1,3 +1,29 @@
+import { Config } from '../utils/config.js'
+import { getChatHistoryGroup } from '../utils/chat.js'
+import { convertFaces } from '../utils/face.js'
+import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
+import common from '../../../lib/common/common.js'; // 引入 common 工具
+import core from '../model/core.js'
+
+function formatDate(timestamp) {
+  if (!timestamp) return '未知时间';
+  const date = new Date(timestamp);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hours = String(date.getHours()).padStart(2, '0');
+  const minutes = String(date.getMinutes()).padStart(2, '0');
+  const seconds = String(date.getSeconds()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+}
+
+const roleMap = {
+  owner: '群主',
+  admin: '管理员',
+  member: '普通成员',
+}
+
+export class bym extends plugin {
 class bym extends plugin {
   constructor () {
     super({
