@@ -2,7 +2,7 @@ import { Config } from '../utils/config.js'
 import { getChatHistoryGroup } from '../utils/chat.js'
 import { convertFaces } from '../utils/face.js'
 import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
-import common from '../../../../lib/common/common.js'; // 引入 common 工具
+import common from '../../../lib/common/common.js'; // 引入 common 工具
 import core from '../model/core.js'
 
 function formatDate(timestamp) {
