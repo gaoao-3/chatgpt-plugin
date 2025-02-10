@@ -185,59 +185,76 @@ ${chats
     .join('\n')}
 请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
 `;
-
       // 发送消息并获取回复
       let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
-        enableSmart: true,
-        system: {
-          api: system,
-          qwen: system,
-          bing: system,
-          claude: system,
-          claude2: system,
-          gemini: system
-        },
-        settings: {
-          replyPureTextCallback: msg => {
-            msg = filterResponseChunk(msg)
-            msg && e.reply(msg)
-          }
-        }
-      });
-
-      let text = rsp.text;
-
-      // 正则提取思考过程内容（匹配 [思考开始] 到 [思考结束]）
-      const thoughtProcessRegex = /(\[思考开始\][\s\S]*?\[思考结束\])/;
-      let thoughtProcessMatch = text.match(thoughtProcessRegex);
-      let thoughtProcess = '';
-      if (thoughtProcessMatch) {
-        thoughtProcess = thoughtProcessMatch[0];
-        // 从文本中剔除思考过程部分
-        text = text.replace(thoughtProcess, '');
-      }
-
-      // 分割剩余文本（最多分割为 3 段）
-      let texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3);
-
-      // 构建转发消息数组，参考 GLMSearchTool 的逻辑
-      const forwardMsg = [`${card || e.sender.nickname || e.user_id} 的回复：`]; // 加入发送者信息
-      if (thoughtProcess) {
-        forwardMsg.push(`【思考过程】\n${thoughtProcess}`);
-      }
-      texts.forEach(t => {
-        t = t.trim();
-        if (!t) return;
-        // 如果句尾可能缺少问号，则补上
-        if (text[text.indexOf(t) + t.length] === '？') {
-          t += '？';
-        }
-        forwardMsg.push(t);
-      });
-
-      // 使用 common.makeForwardMsg 构建转发消息并发送
-      await e.reply(await common.makeForwardMsg(e, forwardMsg, `机器人回复`));
+  enableSmart: true,
+  system: {
+    api: system,
+    qwen: system,
+    bing: system,
+    claude: system,
+    claude2: system,
+    gemini: system
+  },
+  settings: {
+    replyPureTextCallback: msg => {
+      msg = filterResponseChunk(msg)
+      msg && e.reply(msg)
     }
-    return false;
+  }
+});
+
+// 获取回复文本
+let text = rsp.text;
+
+// 正则提取思考过程内容（匹配 [思考开始] 到 [思考结束]）
+const thoughtProcessRegex = /(\[思考开始\][\s\S]*?\[思考结束\])/;
+let thoughtProcessMatch = text.match(thoughtProcessRegex);
+let thoughtProcess = '';
+if (thoughtProcessMatch) {
+  thoughtProcess = thoughtProcessMatch[0];
+  // 从文本中剔除思考过程部分
+  text = text.replace(thoughtProcess, '');
+}
+
+// 构建转发消息数组
+const forwardMsg = [`${e.sender.card || e.sender.nickname || e.user_id} 的回复：`];
+
+// 如果存在思考过程，首先添加思考过程
+if (thoughtProcess) {
+  forwardMsg.push(`【思考过程】\n${thoughtProcess}`);
+}
+
+// 使用 common.makeForwardMsg 构建转发消息并发送
+await e.reply(await common.makeForwardMsg(e, forwardMsg, `机器人回复`));
+
+// 直接回复剩余文本
+let texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3);  // 分割剩余文本
+for (let t of texts) {
+  if (!t) continue;
+  t = t.trim();
+  if (!t) continue;
+
+  // 如果句尾可能缺少问号，则补上
+  if (text[text.indexOf(t) + t.length] === '？') {
+    t += '？';
+  }
+
+  let finalMsg = await convertFaces(t, true, e);
+  logger.info(JSON.stringify(finalMsg));
+  finalMsg = finalMsg.map(filterResponseChunk).filter(i => !!i);
+  
+  // 直接回复每段文本
+  if (finalMsg && finalMsg.length > 0) {
+    await this.reply(finalMsg, false, {
+      recallMsg: fuck ? 10 : 0
+    });
+
+    // 控制发送的速度，避免过快发送
+    await new Promise((resolve) => {
+      setTimeout(() => {
+        resolve();
+      }, Math.min(finalMsg.length * 200, 3000));
+    });
   }
 }
