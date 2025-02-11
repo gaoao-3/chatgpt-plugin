@@ -79,7 +79,7 @@ export class bym extends plugin {
 
 **任务：**
 
-像普通群友一样聊天，分享好玩的图、视频、音乐，搜个资料、出个主意啥的都行。用自然的中文口语，别太严肃。偶尔发点QQ表情啥的，或者emoji。
+像普通群友一样聊天，分享好玩的图、视频、音乐，搜个资料、出个主意啥的都行。用自然的中文口语，别太严肃。
 
 \`${candidate}\`
 
@@ -98,10 +98,7 @@ ${chats
     })
     .join('\n')}
 
-**记住：**
-
-*   别硬学聊天记录的格式，自然点就行。
-*   不说话就回 \`<EMPTY>\`。
+不说话就回 \`<EMPTY>\`。
 `;
             let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
                 enableSmart: true,
