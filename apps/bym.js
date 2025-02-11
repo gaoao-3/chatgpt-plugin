@@ -80,7 +80,7 @@ export class bym extends plugin {
         logger.info('random chat hit');
 
         // 获取群聊历史记录
-        let chats = await getChatHistoryGroup(e, 35);
+        let chats = await getChatHistoryGroup(e, 100);
         let system =
           `你是一个 QQ 群聊机器人，你的名字是 "${Config.assistantLabel}"。
 
