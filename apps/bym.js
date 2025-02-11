@@ -101,7 +101,8 @@ ${chats
 **记住：**
 
 *   别硬学聊天记录的格式，自然点就行。
-*   不说话就回 \`<EMPTY>\`;
+*   不说话就回 \`<EMPTY>\`。
+`;
             let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
                 enableSmart: true,
                 system: {
