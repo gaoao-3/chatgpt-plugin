@@ -161,14 +161,33 @@ ${chats
 
         let text = rsp.text;
 
-        // 分割文本，包括可能的思考过程和普通回复
-        const texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3);
-        if (!texts || texts.length === 0) return false;
+        // 正则提取思考过程内容
+        const thoughtProcessRegex = /\[思考开始\]([\s\S]*?)\[思考结束\]/;
+        const thoughtProcessMatch = text.match(thoughtProcessRegex);
+        let thoughtProcess = '';
+        if (thoughtProcessMatch && thoughtProcessMatch[1] !== undefined) {
+          thoughtProcess = thoughtProcessMatch[1].trim(); // 获取并去除首尾空格
+          text = text.replace(/\[思考开始\][\s\S]*?\[思考结束\]/, ''); // 从原始文本中移除思考过程
+        }
 
         // 构建转发消息数组
         const senderName = e.sender?.card || e.sender?.nickname || e.user_id || '未知用户';
         const forwardMsg = [`${senderName} 的回复：`];
-        let hasThoughtProcess = false;
+
+        // 如果提取到思考过程，添加到转发消息
+        if (thoughtProcess) {
+          forwardMsg.push(`思考开始\n${thoughtProcess}\n思考结束`);
+        }
+
+        // 使用 common.makeForwardMsg 构建转发消息（如果有思考过程）
+        if (forwardMsg.length > 1) {
+          const forwardPayload = await common.makeForwardMsg(e, forwardMsg, '思考过程');
+          await e.reply(forwardPayload);
+        }
+
+        // 分割剩余文本
+        const texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3);
+        if (!texts || texts.length === 0) return false;
 
         // 循环处理每段文本
         for (let t of texts) {
@@ -176,36 +195,24 @@ ${chats
           t = t.trim();
           if (!t) continue;
 
-          // 检查是否包含思考过程的标记
-          if (t.includes('[思考开始]')) {
-            hasThoughtProcess = true;
-            // 移除 [思考开始] 标记，并添加正确的换行
-            let thoughtContent = t.replace('[思考开始]', '').trim();
-            forwardMsg.push(`思考开始\n${thoughtContent}\n思考结束`);
-          } else {
-            // 普通回复文本
-            let finalMsg = await convertFaces(t, true, e);
-            logger.info('转换后的消息：' + JSON.stringify(finalMsg));
-            finalMsg = Array.isArray(finalMsg)
-              ? finalMsg.map(filterResponseChunk).filter((i) => !!i)
-              : [];
+          // 处理表情转换
+          let finalMsg = await convertFaces(t, true, e);
+          logger.info('转换后的消息：' + JSON.stringify(finalMsg));
+          finalMsg = Array.isArray(finalMsg)
+            ? finalMsg.map(filterResponseChunk).filter((i) => !!i)
+            : [];
 
-            if (finalMsg.length > 0) {
-              await this.reply(finalMsg, false, {
-                recallMsg: typeof fuck !== 'undefined' && fuck ? 10 : 0,
-              });
+          // 回复消息
+          if (finalMsg.length > 0) {
+            await this.reply(finalMsg, false, {
+              recallMsg: typeof fuck !== 'undefined' && fuck ? 10 : 0,
+            });
 
-              await new Promise((resolve) => {
-                setTimeout(resolve, Math.min(finalMsg.length * 200, 3000));
-              });
-            }
+            // 控制回复速度
+            await new Promise((resolve) => {
+              setTimeout(resolve, Math.min(finalMsg.length * 200, 3000));
+            });
           }
-        }
-
-        // 如果有思考过程，构建并发送转发消息
-        if (hasThoughtProcess) {
-          const forwardPayload = await common.makeForwardMsg(e, forwardMsg, '思考过程');
-          await e.reply(forwardPayload);
         }
       }
     } catch (error) {
