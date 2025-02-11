@@ -176,26 +176,25 @@ ${chats
           t = t.trim();
           if (!t) continue;
 
-          // 检查是否包含思考过程的标记（例如 "[思考开始]"）
+          // 检查是否包含思考过程的标记
           if (t.includes('[思考开始]')) {
             hasThoughtProcess = true;
-            forwardMsg.push(`【思考过程】\n${t}`);
+            // 移除 [思考开始] 标记，并添加正确的换行
+            let thoughtContent = t.replace('[思考开始]', '').trim();
+            forwardMsg.push(`思考开始\n${thoughtContent}\n思考结束`);
           } else {
-            // 普通回复文本，添加到待发送消息列表
-            // 处理表情转换
+            // 普通回复文本
             let finalMsg = await convertFaces(t, true, e);
             logger.info('转换后的消息：' + JSON.stringify(finalMsg));
             finalMsg = Array.isArray(finalMsg)
               ? finalMsg.map(filterResponseChunk).filter((i) => !!i)
               : [];
 
-            // 回复消息（如果存在要回复的内容）
             if (finalMsg.length > 0) {
               await this.reply(finalMsg, false, {
                 recallMsg: typeof fuck !== 'undefined' && fuck ? 10 : 0,
               });
 
-              // 控制回复速度，避免发送过快
               await new Promise((resolve) => {
                 setTimeout(resolve, Math.min(finalMsg.length * 200, 3000));
               });
