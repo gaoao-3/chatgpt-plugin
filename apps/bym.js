@@ -1,9 +1,8 @@
-import { Config } from '../utils/config.js';
-import { getChatHistoryGroup } from '../utils/chat.js';
-import { convertFaces } from '../utils/face.js';
-import { customSplitRegex, filterResponseChunk } from '../utils/text.js';
-import common from '../../../lib/common/common.js'; // 引入 common 工具
-import core from '../model/core.js';
+import { Config } from '../utils/config.js'
+import { getChatHistoryGroup } from '../utils/chat.js'
+import { convertFaces } from '../utils/face.js'
+import { customSplitRegex, filterResponseChunk } from '../utils/text.js'
+import core from '../model/core.js'
 
 function formatDate(timestamp) {
   if (!timestamp) return '未知时间';
@@ -16,18 +15,18 @@ function formatDate(timestamp) {
   const seconds = String(date.getSeconds()).padStart(2, '0');
   return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
 }
-
 const roleMap = {
   owner: '群主',
   admin: '管理员',
   member: '普通成员',
-};
+}
 
 export class bym extends plugin {
-  constructor() {
+  constructor () {
     super({
       name: 'ChatGPT-Plugin 伪人bym',
       dsc: 'bym',
+      /** https://oicqjs.github.io/oicq/#events */
       event: 'message',
       priority: 5000,
       rule: [
@@ -35,188 +34,128 @@ export class bym extends plugin {
           reg: '^[^#][sS]*',
           fnc: 'bym',
           priority: '-1000000',
-          log: false,
-        },
-      ],
-    });
+          log: false
+        }
+      ]
+    })
   }
-
   /** 复读 */
-  async bym(e) {
-    try {
-      // 如果机器人被 @，强制回复
-      if (e.atBot) {
-        logger.info('机器人被 @, 强制回复');
-      } else if (!Config.enableBYM) {
-        // 否则，检查是否启用伪人模式
-        return false;
-      }
+  async bym (e) {
+    // 【代码更新】: 增加 atBot 强制回复判断
+    if (e.atBot) { // 如果机器人被 @
+      logger.info('机器人被 @, 强制回复');
+      // 直接进入回复逻辑，忽略后续的配置检查
+    } else if (!Config.enableBYM) { // 否则，检查是否启用伪人模式
+      return false
+    }
 
-      // 伪人禁用群
-      if (Config.bymDisableGroup?.includes(e.group_id?.toString())) {
-        return false;
-      }
+    // 伪人禁用群
+    if (Config.bymDisableGroup?.includes(e.group_id?.toString())) {
+      return false
+    }
 
-      let sender = e.sender?.user_id;
-      let card = e.sender?.card || e.sender?.nickname;
-      let group = e.group_id;
-      let prop = Math.floor(Math.random() * 100);
-
-      // 检查是否启用助手标签
-      if (Config.assistantLabel && e.msg?.includes(Config.assistantLabel)) {
-        prop = -1;
-      }
-
-      // 判断是否存在 "fuck" 关键字
-      let fuck = false;
-      let candidate = Config.bymPreset;
-      if (Config.bymFuckList?.find((i) => e.msg?.includes(i))) {
-        fuck = true;
-        candidate += Config.bymFuckPrompt;
-      }
-
-      if (prop < Config.bymRate || e.atBot) {
-        // 在概率判断中加入 atBot 条件
-        logger.info('random chat hit');
-
-        // 获取群聊历史记录
-        let chats = await getChatHistoryGroup(e, 35);
-        let system =
-          `你是一个 QQ 群聊机器人，你的名字是 "${Config.assistantLabel}"。
-
+    let sender = e.sender.user_id
+    let card = e.sender.card || e.sender.nickname
+    let group = e.group_id
+    let prop = Math.floor(Math.random() * 100)
+    if (Config.assistantLabel && e.msg?.includes(Config.assistantLabel)) {
+      prop = -1
+    }
+    let fuck = false
+    let candidate = Config.bymPreset
+    if (Config.bymFuckList?.find(i => e.msg?.includes(i))) {
+      fuck = true
+      candidate = candidate + Config.bymFuckPrompt
+    }
+    if (prop < Config.bymRate || e.atBot) { // 【代码更新】:  在概率判断中加入 atBot 条件，确保被 @ 时也进入回复逻辑
+      logger.info('random chat hit')
+      let chats = await getChatHistoryGroup(e, 35)
+      let system = `你的名字是"${Config.assistantLabel}"。
 **群聊环境：**
-
-*   你所在的 QQ 群群号是 ${group}。
-*   正在与你对话的群友，他们的群名片是 ${card}，QQ 号是 ${sender}。
-
+*   当前你所在的QQ群群号是 ${group}。
+*   正在与你对话的群友，他们的群名片是 ${card}，QQ号是 ${sender}。
 **你的任务：**
-
-1.  **融入群聊**：像群里的朋友一样自然地参与对话，可以分享图片、视频、音乐，也可以搜索信息、提供建议。
-2.  **思考展现**：在回答问题之前，按照下方的“思考流程要求”进行思考，并将思考过程用 Markdown 格式放在 [思考开始] 和 [思考结束] 之间。
-    *   **注意**：思考内容应采用相对口语化的风格。
-3.  **自然表达**：结合群友的发言、之前的聊天记录和任何接收到的图片内容，做出贴切且有趣的回应。使用流畅自然的中文口语，避免正式或严肃的语气。
-4.  **发言时机**：如果当前情境不需要你主动发言，请回复 "<EMPTY>"。` +
-          candidate +
-          `
-
-**思考流程要求：**
-
-请严格遵循以下思考路径：
-
-*   **问题解构**：分析用户问题的显性需求和潜在需求。
-*   **知识图谱**：调用相关领域的结构化知识体系。
-*   **逻辑推演**：构建至少三条解决方案路径并评估优劣。
-*   **风险预判**：识别可能的认知偏差或信息盲区。
-*   **验证机制**：通过反向推理验证结论的合理性。
-*   **表达优化**：根据用户身份特征调整表达方式。
-
+*   融入当前的QQ群聊，像群里的朋友一样自然地参与对话。
+*   结合群友的发言、之前的聊天记录和任何接收到的图片内容，做出贴切且有趣的回应。
+**你可以做：**
+*   分享有趣的图片、视频和音乐，活跃群聊气氛，给大家带来轻松和快乐。
+*   快速在网络上搜索信息，解答群友的疑问，或找到他们可能感兴趣的内容。
+*   提供有创意、好玩的想法和建议，例如组织群活动或发起有趣的话题。
+*   以轻松、口语化的方式回答问题，避免使用正式或严肃的语气。
+**行为注意：**
+*   **目标：** 你的回复要自然、有趣、贴近群聊的日常氛围，但避免过于活跃或刷屏。
+*   **工具运用：** 当需要查找信息时，你可以自然地使用工具，并将找到的内容分享出来，让群友感觉是你自己发现并分享的。
+*   **语言：**  始终使用流畅自然的中文进行交流。
+*   **表达：**  如果一时没有特别的想法，可以简洁地回应群友，表示你在关注群聊。
+*   **发言时机：**  如果当前情境不需要你主动发言，请回复 "<EMPTY>"` + candidate + `
 **背景信息：**
 以下是之前的聊天记录，请仔细阅读，理解群聊的对话背景，以便做出更恰当的回应。请注意，无需模仿聊天记录的格式，请用你自己的风格自然对话。
 ${chats
-  .map((chat) => {
-    let sender = chat.sender || chat || {};
-    const timestamp = chat.time || chat.timestamp || chat.createTime;
-    return `
+    .map(chat => {
+        let sender = chat.sender || chat || {};
+        const timestamp = chat.time || chat.timestamp || chat.createTime;
+        return `
 --------------------------
 时间：${formatDate(new Date(timestamp * 1000))}
 发送者：【${sender.card || sender.nickname}】 (QQ: ${sender.user_id})
-角色：${roleMap[sender.role] || '普通成员'} ${
-      sender.title ? `头衔：${sender.title}` : ''
-    }
+角色：${roleMap[sender.role] || '普通成员'} ${sender.title ? `头衔：${sender.title}` : ''}
 内容：${chat.raw_message}
 --------------------------
 `;
-  })
-  .join('\n')}
+    })
+    .join('\n')}
+请记住以第一人称的方式，用轻松自然的语气和群友们愉快交流吧！
 `;
-
-        // 调用 core.sendMessage 发送消息
-        const rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
-          enableSmart: true, // 启用智能模式，支持工具调用
-          system: {
-            api: system,       // 针对 OpenAI API 的系统提示
-            qwen: system,      // 针对 Qwen 的系统提示
-            bing: system,        // 针对 Bing 的系统提示
-            claude: system,   // 针对 Claude 的系统提示
-            claude2: system,  // 针对 Claude2 的系统提示
-            gemini: system,    // 针对 Gemini 的系统提示
-            xh: system,          // 针对星火的系统提示
-            chatglm4: system
-          },
-          settings: {
-            replyPureTextCallback: async (msg) => {
-              msg = filterResponseChunk(msg);
-              if (msg) {
-                // 使用 e.reply 发送消息，并根据需要进行处理
-                await e.reply(msg);
-              }
-            },
-          },
-        });
-
-        if (!rsp || !rsp.text) {
-          logger.error('core.sendMessage 返回的结果为空或缺少 text 属性');
-          return false;
-        }
-
-        let text = rsp.text;
-
-        // 正则提取思考过程内容
-        const thoughtProcessRegex = /\[思考开始\]([\s\S]*?)\[思考结束\]/;
-        const thoughtProcessMatch = text.match(thoughtProcessRegex);
-        let thoughtProcess = '';
-        if (thoughtProcessMatch && thoughtProcessMatch[1] !== undefined) {
-          thoughtProcess = thoughtProcessMatch[1].trim(); // 获取并去除首尾空格
-          text = text.replace(/\[思考开始\][\s\S]*?\[思考结束\]/, ''); // 从原始文本中移除思考过程
-        }
-
-        // 构建转发消息数组
-        const senderName = e.sender?.card || e.sender?.nickname || e.user_id || '未知用户';
-        const forwardMsg = [`${senderName} 的回复：`];
-
-        // 如果提取到思考过程，添加到转发消息
-        if (thoughtProcess) {
-          forwardMsg.push(`思考开始\n${thoughtProcess}\n思考结束`);
-        }
-
-        // 使用 common.makeForwardMsg 构建转发消息（如果有思考过程）
-        if (forwardMsg.length > 1) {
-          const forwardPayload = await common.makeForwardMsg(e, forwardMsg, '思考过程');
-          await e.reply(forwardPayload);
-        }
-
-        // 分割剩余文本
-        const texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3);
-        if (!texts || texts.length === 0) return false;
-
-        // 循环处理每段文本
-        for (let t of texts) {
-          if (!t) continue;
-          t = t.trim();
-          if (!t) continue;
-
-          // 处理表情转换
-          let finalMsg = await convertFaces(t, true, e);
-          logger.info('转换后的消息：' + JSON.stringify(finalMsg));
-          finalMsg = Array.isArray(finalMsg)
-            ? finalMsg.map(filterResponseChunk).filter((i) => !!i)
-            : [];
-
-          // 回复消息
-          if (finalMsg.length > 0) {
-            await this.reply(finalMsg, false, {
-              recallMsg: typeof fuck !== 'undefined' && fuck ? 10 : 0,
-            });
-
-            // 控制回复速度
-            await new Promise((resolve) => {
-              setTimeout(resolve, Math.min(finalMsg.length * 200, 3000));
-            });
+      let rsp = await core.sendMessage(e.msg, {}, Config.bymMode, e, {
+        enableSmart: true,
+        system: {
+          api: system,
+          qwen: system,
+          bing: system,
+          claude: system,
+          claude2: system,
+          gemini: system
+        },
+        settings: {
+          replyPureTextCallback: msg => {
+            msg = filterResponseChunk(msg)
+            msg && e.reply(msg)
           }
         }
+      })
+      // let rsp = await client.sendMessage(e.msg, opt)
+      let text = rsp.text
+      let texts = customSplitRegex(text, /(?<!\?)[。？\n](?!\?)/, 3)
+      // let texts = text.split(/(?<!\?)[。？\n](?!\?)/, 3)
+      for (let t of texts) {
+        if (!t) {
+          continue
+        }
+        t = t.trim()
+        if (text[text.indexOf(t) + t.length] === '？') {
+          t += '？'
+        }
+        let finalMsg = await convertFaces(t, true, e)
+        logger.info(JSON.stringify(finalMsg))
+        finalMsg = finalMsg.map(filterResponseChunk).filter(i => !!i)
+        if (finalMsg && finalMsg.length > 0) {
+          if (Math.floor(Math.random() * 100) < 10) {
+            await this.reply(finalMsg, true, {
+              recallMsg: fuck ? 10 : 0
+            })
+          } else {
+            await this.reply(finalMsg, false, {
+              recallMsg: fuck ? 10 : 0
+            })
+          }
+          await new Promise((resolve, reject) => {
+            setTimeout(() => {
+              resolve()
+            }, Math.min(t.length * 200, 3000))
+          })
+        }
       }
-    } catch (error) {
-      logger.error('处理过程中出现错误：', error);
     }
+    return false
   }
 }
