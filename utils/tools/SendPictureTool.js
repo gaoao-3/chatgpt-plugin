@@ -47,7 +47,10 @@ export class SendPictureTool extends AbstractTool {
         await group.sendMsg(pictures)
         return 'picture has been sent to group' + target
       } else {
-        let user = await e.bot.pickFriend(target)
+        let user = e.bot.pickUser(target)
+        if (e.group_id) {
+          user = user.asMember(e.group_id)
+        }
         await user.sendMsg(pictures)
         return 'picture has been sent to user' + target
       }

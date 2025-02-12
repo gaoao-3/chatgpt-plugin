@@ -5,7 +5,7 @@ export async function getChatHistoryGroup (e, num) {
   // if (e.adapter === 'shamrock') {
   //  return await e.group.getChatHistory(0, num, false)
   // } else {
-  let latestChats = await e.group.getChatHistory(0, 1)
+  let latestChats = await e.group.getChatHistory(e.seq || e.message_id, 1)
   if (latestChats.length > 0) {
     let latestChat = latestChats[0]
     if (latestChat) {
